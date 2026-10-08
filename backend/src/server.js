@@ -12,6 +12,7 @@ const announcementRoutes = require("./routes/announcements");
 const documentRoutes = require("./routes/documents");
 const notificationRoutes = require("./routes/notifications");
 const dashboardRoutes = require("./routes/dashboard");
+const aiRoutes = require("./routes/ai");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ai", aiRoutes);
 
 // เสิร์ฟ Frontend Production Build อัตโนมัติ (รองรับ Cloud Fullstack และ SPA Routing)
 const frontendDist = path.join(__dirname, "../../frontend/dist");

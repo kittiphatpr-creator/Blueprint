@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import MobileBottomNav from "../components/MobileBottomNav";
+import LeaveAIChat from "../components/LeaveAIChat";
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -25,6 +26,9 @@ export default function MainLayout() {
         {/* Mobile Bottom Navigation สำหรับมือถือ Android & iOS */}
         <MobileBottomNav />
       </div>
+
+      {/* ผู้ช่วย AI (Gemini) สรุปวันลาคงเหลือ */}
+      <LeaveAIChat />
     </div>
   );
 }
