@@ -116,10 +116,10 @@ async function updateProfile(req, res) {
 async function updateAvatar(req, res) {
   try {
     let profile_image = null;
-    if (req.file) {
-      profile_image = `/uploads/${req.file.filename}`;
-    } else if (req.body.profile_image) {
+    if (req.body?.profile_image) {
       profile_image = req.body.profile_image;
+    } else if (req.file) {
+      profile_image = `/uploads/${req.file.filename}`;
     }
 
     if (!profile_image) {

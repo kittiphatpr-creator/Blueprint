@@ -17,8 +17,18 @@ export function AuthProvider({ children }) {
       if (storedToken) {
         try {
           const freshUser = await authService.getMe();
-          setUser(freshUser);
-          localStorage.setItem("user", JSON.stringify(freshUser));
+          const userObj = { ...freshUser };
+          const cachedAvatar = localStorage.getItem("profile_avatar_" + userObj.email?.toLowerCase());
+
+          if (!userObj.profile_image && cachedAvatar) {
+            userObj.profile_image = cachedAvatar;
+            authService.uploadAvatar({ profile_image: cachedAvatar }).catch(() => {});
+          } else if (userObj.profile_image) {
+            localStorage.setItem("profile_avatar_" + userObj.email?.toLowerCase(), userObj.profile_image);
+          }
+
+          setUser(userObj);
+          localStorage.setItem("user", JSON.stringify(userObj));
         } catch {
           // Token invalid
           setUser(null);
@@ -36,20 +46,40 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const data = await authService.login(email, password);
+    const userObj = { ...data.user };
+    const cachedAvatar = localStorage.getItem("profile_avatar_" + userObj.email?.toLowerCase());
+
+    if (!userObj.profile_image && cachedAvatar) {
+      userObj.profile_image = cachedAvatar;
+      authService.uploadAvatar({ profile_image: cachedAvatar }).catch(() => {});
+    } else if (userObj.profile_image) {
+      localStorage.setItem("profile_avatar_" + userObj.email?.toLowerCase(), userObj.profile_image);
+    }
+
     setToken(data.token);
-    setUser(data.user);
+    setUser(userObj);
     localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    return data.user;
+    localStorage.setItem("user", JSON.stringify(userObj));
+    return userObj;
   };
 
   const loginWithGoogle = async (credential) => {
     const data = await authService.loginWithGoogle(credential);
+    const userObj = { ...data.user };
+    const cachedAvatar = localStorage.getItem("profile_avatar_" + userObj.email?.toLowerCase());
+
+    if (!userObj.profile_image && cachedAvatar) {
+      userObj.profile_image = cachedAvatar;
+      authService.uploadAvatar({ profile_image: cachedAvatar }).catch(() => {});
+    } else if (userObj.profile_image) {
+      localStorage.setItem("profile_avatar_" + userObj.email?.toLowerCase(), userObj.profile_image);
+    }
+
     setToken(data.token);
-    setUser(data.user);
+    setUser(userObj);
     localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    return data.user;
+    localStorage.setItem("user", JSON.stringify(userObj));
+    return userObj;
   };
 
   // ปุ่ม Quick Demo Login สำหรับสลับทดสอบแต่ละ Role ใน 1 คลิก
@@ -66,6 +96,9 @@ export function AuthProvider({ children }) {
   };
 
   const updateUserProfile = (updatedUser) => {
+    if (updatedUser?.profile_image && updatedUser?.email) {
+      localStorage.setItem("profile_avatar_" + updatedUser.email.toLowerCase(), updatedUser.profile_image);
+    }
     setUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
   };

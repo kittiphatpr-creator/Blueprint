@@ -25,7 +25,13 @@ import {
 
 function EmployeeAvatar({ src, name, size = "large" }) {
   const [error, setError] = useState(false);
-  const isValidUrl = src && typeof src === "string" && (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/uploads/") || src.startsWith("/"));
+  const isValidUrl = src && typeof src === "string" && (
+    src.startsWith("http://") || 
+    src.startsWith("https://") || 
+    src.startsWith("/uploads/") || 
+    src.startsWith("/") || 
+    src.startsWith("data:image/")
+  );
 
   const initial = name
     ? name.replace(/^(ศาสตราจารย์|รองศาสตราจารย์|ผู้ช่วยศาสตราจารย์|อาจารย์|ศ\.|รศ\.|ผศ\.|อ\.|ดร\.|นาย|นาง|นางสาว)\s*/g, "").trim().charAt(0) || name.charAt(0)

@@ -21,11 +21,10 @@ export const authService = {
     return response.data;
   },
 
-  async uploadAvatar(formData) {
-    const response = await api.post("/auth/avatar", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+  async uploadAvatar(data) {
+    const isFormData = data instanceof FormData;
+    const response = await api.post("/auth/avatar", data, {
+      headers: isFormData ? { "Content-Type": "multipart/form-data" } : {},
     });
     return response.data;
   },

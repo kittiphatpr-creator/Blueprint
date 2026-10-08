@@ -195,6 +195,14 @@ export default function Navbar({ onToggleSidebar }) {
                 <img
                   src={user.profile_image}
                   alt={user?.full_name}
+                  onError={(e) => {
+                    const cached = user?.email ? localStorage.getItem("profile_avatar_" + user.email.toLowerCase()) : null;
+                    if (cached && e.currentTarget.src !== cached) {
+                      e.currentTarget.src = cached;
+                    } else {
+                      e.currentTarget.style.display = "none";
+                    }
+                  }}
                   className="w-9 h-9 rounded-full object-cover shadow-xs border border-red-800/30"
                 />
               ) : (

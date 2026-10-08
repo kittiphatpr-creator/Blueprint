@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/authService";
 import { RoleBadge } from "../components/Badge";
@@ -17,14 +17,59 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
+// บีบอัดและย่อขนาดรูปภาพเป็น Base64 จตุรัสคุณภาพสูง (~25-35KB) เพื่อบันทึกลงฐานข้อมูลและแคชแบบถาวร
+function compressImage(file, targetSize = 360, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const size = Math.min(img.width, img.height);
+        const startX = (img.width - size) / 2;
+        const startY = (img.height - size) / 2;
+
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, startX, startY, size, size, 0, 0, targetSize, targetSize);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}
+
 export default function Profile() {
   const { user, updateUserProfile } = useAuth();
   const fileInputRef = useRef(null);
 
-  // Avatar State
-  const [avatarPreview, setAvatarPreview] = useState(user?.profile_image || null);
+  // Avatar State (ดึงจาก user หรือ local storage อัตโนมัติ)
+  const [avatarPreview, setAvatarPreview] = useState(() => {
+    return user?.profile_image || (user?.email ? localStorage.getItem("profile_avatar_" + user.email.toLowerCase()) : null);
+  });
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarMsg, setAvatarMsg] = useState({ text: "", type: "" });
+
+  // ติดตามและกู้คืนรูปโปรไฟล์หากเซิร์ฟเวอร์รีเซ็ต
+  useEffect(() => {
+    if (user?.email) {
+      const cached = localStorage.getItem("profile_avatar_" + user.email.toLowerCase());
+      if (user.profile_image) {
+        setAvatarPreview(user.profile_image);
+        localStorage.setItem("profile_avatar_" + user.email.toLowerCase(), user.profile_image);
+      } else if (cached) {
+        setAvatarPreview(cached);
+        updateUserProfile({ ...user, profile_image: cached });
+        authService.uploadAvatar({ profile_image: cached }).catch(() => {});
+      }
+    }
+  }, [user?.email, user?.profile_image]);
 
   // Profile Form State
   const [profileData, setProfileData] = useState({
@@ -55,26 +100,27 @@ export default function Profile() {
       return;
     }
 
-    // Local preview immediately
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAvatarPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-
-    // Auto upload to server
     setAvatarLoading(true);
     setAvatarMsg({ text: "", type: "" });
 
-    const formData = new FormData();
-    formData.append("avatar", file);
-
     try {
-      const res = await authService.uploadAvatar(formData);
+      // 1. บีบอัดรูปภาพเป็น Base64 คุณภาพสูง ขนาดเล็ก (~30KB)
+      const compressedBase64 = await compressImage(file, 360, 0.85);
+
+      // 2. แสดงตัวอย่างทันที
+      setAvatarPreview(compressedBase64);
+
+      // 3. บันทึกลง Local Storage ทันที ป้องกันการสูญหายเมื่อรีโหลดหรือออกเข้าใหม่
+      if (user?.email) {
+        localStorage.setItem("profile_avatar_" + user.email.toLowerCase(), compressedBase64);
+      }
+
+      // 4. บันทึกลงฐานข้อมูลทั้งสองทาง (Base64 JSON + Multipart)
+      const res = await authService.uploadAvatar({ profile_image: compressedBase64 });
       updateUserProfile(res.user);
-      setAvatarPreview(res.user.profile_image);
       setAvatarMsg({ text: "เปลี่ยนรูปโปรไฟล์เรียบร้อยแล้ว!", type: "success" });
     } catch (err) {
+      console.error(err);
       setAvatarMsg({
         text: err.response?.data?.message || "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ",
         type: "error",
