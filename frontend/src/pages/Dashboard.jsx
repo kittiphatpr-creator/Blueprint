@@ -68,7 +68,7 @@ export default function Dashboard() {
               <span>{user?.department_name || "คณะวิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม"}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              สวัสดี, {user?.full_name || "อาจารย์/บุคลากร"}
+              {user?.full_name || "อาจารย์/บุคลากร"}
             </h1>
             <p className="text-sm text-red-100/80 mt-1">
               ยินดีต้อนรับสู่ระบบสารสนเทศบุคลากรและระบบการลางานออนไลน์ มหาวิทยาลัยกาฬสินธุ์
