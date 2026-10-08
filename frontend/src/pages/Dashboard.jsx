@@ -54,30 +54,35 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-red-900 via-red-800 to-slate-900 text-white p-6 sm:p-8 shadow-lg shadow-red-950/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-center gap-4 sm:gap-5">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 shadow-md flex items-center justify-center shrink-0">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-950 via-red-900 to-slate-900 text-white p-6 sm:p-8 shadow-xl shadow-red-950/20 border border-red-800/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        {/* Background glow effects */}
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-slate-700/30 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex items-center gap-4 sm:gap-6 z-10">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/95 p-2 shadow-lg shadow-black/20 flex items-center justify-center shrink-0 border border-white/40 transition-transform hover:scale-105 duration-300">
             <img
               src="/logo.png"
-              alt="ตราคณะ"
+              alt="ตราคณะวิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยกาฬสินธุ์"
               className="w-full h-full object-contain"
             />
           </div>
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-red-200 uppercase tracking-wider mb-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-medium text-red-100 mb-2 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>{user?.department_name || "คณะวิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม"}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {user?.full_name || "อาจารย์/บุคลากร"}
+            <h1 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-white tracking-normal leading-snug drop-shadow-sm font-['Prompt',sans-serif]">
+              {user?.full_name || "อาจารย์ / บุคลากร"}
             </h1>
-            <p className="text-sm text-red-100/80 mt-1">
+            <p className="text-xs sm:text-sm text-red-100/80 font-normal mt-1 leading-relaxed">
               ยินดีต้อนรับสู่ระบบสารสนเทศบุคลากรและระบบการลางานออนไลน์ มหาวิทยาลัยกาฬสินธุ์
             </p>
           </div>
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="flex flex-wrap gap-2.5">
+        <div className="relative flex flex-wrap gap-2.5 z-10">
           <Link
             to="/leave-request"
             className="flex items-center gap-2 px-4 py-2.5 bg-white text-red-900 hover:bg-red-50 font-bold rounded-xl text-sm shadow-md transition transform active:scale-95"
@@ -88,7 +93,7 @@ export default function Dashboard() {
           {isApprover && (
             <Link
               to="/leave-approval"
-              className="flex items-center gap-2 px-4 py-2.5 bg-red-700/80 hover:bg-red-700 text-white font-semibold rounded-xl text-sm border border-red-500/30 transition"
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-700/80 hover:bg-red-700 text-white font-semibold rounded-xl text-sm border border-red-500/30 transition shadow-xs"
             >
               <CheckCircle2 className="w-4 h-4" />
               อนุมัติการลา
