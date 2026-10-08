@@ -17,6 +17,9 @@ import {
   ImageIcon,
   UploadCloud,
   X,
+  FileText,
+  Paperclip,
+  Download,
 } from "lucide-react";
 
 export default function Announcements() {
@@ -35,9 +38,11 @@ export default function Announcements() {
     title: "",
     content: "",
     image_url: "",
+    attachment_url: "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState(null);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -61,9 +66,10 @@ export default function Announcements() {
 
   const handleOpenAdd = () => {
     setIsEditMode(false);
-    setFormData({ id: null, title: "", content: "", image_url: "" });
+    setFormData({ id: null, title: "", content: "", image_url: "", attachment_url: "" });
     setImageFile(null);
     setImagePreview("");
+    setAttachmentFile(null);
     setIsFormOpen(true);
   };
 
@@ -74,9 +80,11 @@ export default function Announcements() {
       title: item.title,
       content: item.content,
       image_url: item.image_url || "",
+      attachment_url: item.attachment_url || "",
     });
     setImageFile(null);
     setImagePreview(item.image_url || "");
+    setAttachmentFile(null);
     setIsFormOpen(true);
   };
 
@@ -98,24 +106,42 @@ export default function Announcements() {
     setFormData((prev) => ({ ...prev, image_url: "" }));
   };
 
+  const handleAttachmentChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 25 * 1024 * 1024) {
+        setMessage({ text: "ขนาดไฟล์เอกสารต้องไม่เกิน 25MB", type: "error" });
+        return;
+      }
+      setAttachmentFile(file);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentFile(null);
+    setFormData((prev) => ({ ...prev, attachment_url: "" }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setActionLoading(true);
     setMessage({ text: "", type: "" });
 
     try {
-      let payload;
+      const payload = new FormData();
+      payload.append("title", formData.title);
+      payload.append("content", formData.content);
+
       if (imageFile) {
-        payload = new FormData();
-        payload.append("title", formData.title);
-        payload.append("content", formData.content);
         payload.append("image", imageFile);
       } else {
-        payload = {
-          title: formData.title,
-          content: formData.content,
-          image_url: imagePreview ? formData.image_url : null,
-        };
+        payload.append("image_url", imagePreview ? formData.image_url : "");
+      }
+
+      if (attachmentFile) {
+        payload.append("attachment", attachmentFile);
+      } else {
+        payload.append("attachment_url", formData.attachment_url || "");
       }
 
       if (isEditMode) {
@@ -243,6 +269,26 @@ export default function Announcements() {
                 <p className="text-xs text-slate-600 mt-2.5 line-clamp-4 leading-relaxed whitespace-pre-line">
                   {item.content}
                 </p>
+
+                {item.attachment_url && (
+                  <div className="mt-3">
+                    <a
+                      href={item.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-200/70 text-xs font-semibold transition"
+                      title="ดาวน์โหลดเอกสารแนบ"
+                    >
+                      <Paperclip className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                      <span className="truncate max-w-[180px]">
+                        เอกสารแนบ: {decodeURIComponent(item.attachment_url.split("/").pop() || "เอกสาร")}
+                      </span>
+                      <Download className="w-3 h-3 text-amber-700 shrink-0 ml-0.5" />
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Footer Actions */}
@@ -309,6 +355,32 @@ export default function Announcements() {
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-sm text-slate-800 whitespace-pre-line leading-relaxed">
               {viewItem.content}
             </div>
+
+            {viewItem.attachment_url && (
+              <div className="p-3.5 sm:p-4 bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold text-slate-900 truncate">
+                      {decodeURIComponent(viewItem.attachment_url.split("/").pop() || "เอกสารแนบ")}
+                    </p>
+                    <p className="text-[11px] text-slate-500">เอกสารแนบประกอบประกาศ</p>
+                  </div>
+                </div>
+                <a
+                  href={viewItem.attachment_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition shrink-0"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>ดาวน์โหลดเอกสาร</span>
+                </a>
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -386,6 +458,61 @@ export default function Announcements() {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* Document Attachment Field */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              เอกสารแนบประกอบประกาศ <span className="text-slate-400 font-normal">(ถ้ามี)</span>
+            </label>
+
+            {attachmentFile || formData.attachment_url ? (
+              <div className="flex items-center justify-between p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold text-slate-900 truncate">
+                      {attachmentFile
+                        ? attachmentFile.name
+                        : decodeURIComponent(formData.attachment_url.split("/").pop() || "เอกสารแนบ")}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      {attachmentFile
+                        ? `${(attachmentFile.size / (1024 * 1024)).toFixed(2)} MB (พร้อมอัปโหลด)`
+                        : "เอกสารแนบเดิม"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveAttachment}
+                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0"
+                  title="นำเอกสารออก"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 bg-slate-50 hover:bg-amber-50/30 rounded-2xl p-4 cursor-pointer transition text-center group">
+                <div className="w-9 h-9 rounded-full bg-slate-100 group-hover:bg-amber-100 text-slate-500 group-hover:text-amber-800 flex items-center justify-center mb-1.5 transition">
+                  <Paperclip className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700 group-hover:text-amber-900">
+                  คลิกเพื่อแนบไฟล์เอกสาร
+                </span>
+                <span className="text-[11px] text-slate-400 mt-0.5">
+                  รองรับ PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP (ไม่เกิน 25MB)
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar"
+                  onChange={handleAttachmentChange}
                   className="hidden"
                 />
               </label>

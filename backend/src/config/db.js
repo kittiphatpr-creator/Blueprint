@@ -104,6 +104,7 @@ function initSqlite() {
       content TEXT NOT NULL,
       posted_by INTEGER,
       image_url TEXT,
+      attachment_url TEXT,
       created_at DATETIME DEFAULT (datetime('now', 'localtime'))
     );
 
@@ -126,6 +127,13 @@ function initSqlite() {
       created_at DATETIME DEFAULT (datetime('now', 'localtime'))
     );
   `);
+
+  // Migration for existing tables: add attachment_url if missing
+  try {
+    sqliteDb.exec("ALTER TABLE announcements ADD COLUMN attachment_url TEXT;");
+  } catch (e) {
+    // Column already exists
+  }
 
   // Seed Initial Data if empty
   const userCountStmt = sqliteDb.prepare("SELECT COUNT(*) AS count FROM users");
@@ -360,6 +368,10 @@ async function ensureAdminUser() {
   try {
     await pgPool.query("SELECT 1");
     console.log("✅ เชื่อมต่อฐานข้อมูล PostgreSQL สำเร็จ");
+    try {
+      await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS image_url TEXT;");
+      await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS attachment_url TEXT;");
+    } catch (e) {}
   } catch (err) {
     console.log("ℹ️ ไม่พบ PostgreSQL (หรือยังไม่ได้เปิด pgAdmin) -> สลับใช้งาน Local SQLite อัตโนมัติ พร้อมใช้งานทันที!");
     useSqlite = true;

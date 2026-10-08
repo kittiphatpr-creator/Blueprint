@@ -19,6 +19,7 @@ import {
   ArrowUpRight,
   UserCheck,
   Megaphone,
+  Paperclip,
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -297,7 +298,15 @@ export default function Dashboard() {
                     <p className="text-xs text-slate-600 mt-1 line-clamp-2">{item.content}</p>
                     <div className="mt-2 text-[11px] text-slate-600 flex items-center justify-between">
                       <span>{item.posted_by_name || "คณะวิศวกรรมศาสตร์"}</span>
-                      <span>{formatThaiDate(item.created_at, true)}</span>
+                      <div className="flex items-center gap-2">
+                        {item.attachment_url && (
+                          <span className="inline-flex items-center gap-1 text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60">
+                            <Paperclip className="w-2.5 h-2.5" />
+                            <span>เอกสารแนบ</span>
+                          </span>
+                        )}
+                        <span>{formatThaiDate(item.created_at, true)}</span>
+                      </div>
                     </div>
                   </div>
                 ))

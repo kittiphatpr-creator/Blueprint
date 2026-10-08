@@ -109,7 +109,7 @@ async function getSummary(req, res) {
 
     // 8. ประกาศข่าวสารล่าสุด
     const recentAnnouncementsRes = await pool.query(
-      `SELECT a.id, a.title, a.content, a.image_url, a.created_at, u.full_name AS posted_by_name
+      `SELECT a.id, a.title, a.content, a.image_url, a.attachment_url, a.created_at, u.full_name AS posted_by_name
        FROM announcements a
        LEFT JOIN users u ON u.id = a.posted_by
        ORDER BY a.created_at DESC
