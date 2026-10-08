@@ -39,7 +39,7 @@ function EmployeeAvatar({ src, name, size = "large" }) {
         onError={() => setError(true)}
         className={
           size === "large"
-            ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl ring-4 ring-white bg-white group-hover:scale-105 transition-transform"
+            ? "w-20 h-20 rounded-full object-cover shadow-lg ring-4 ring-white bg-white group-hover:scale-105 transition-transform relative z-20 shrink-0"
             : size === "modal"
             ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl ring-4 ring-white shrink-0"
             : "w-10 h-10 rounded-full object-cover shadow-xs border border-slate-200 shrink-0"
@@ -52,7 +52,7 @@ function EmployeeAvatar({ src, name, size = "large" }) {
     <div
       className={
         size === "large"
-          ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-red-800 via-rose-700 to-amber-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-xl ring-4 ring-white group-hover:scale-105 transition-transform tracking-wider"
+          ? "w-20 h-20 rounded-full bg-gradient-to-tr from-red-800 via-rose-700 to-amber-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg ring-4 ring-white group-hover:scale-105 transition-transform tracking-wider relative z-20 shrink-0"
           : size === "modal"
           ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-red-800 via-rose-700 to-amber-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-xl ring-4 ring-white shrink-0"
           : "w-10 h-10 rounded-full bg-gradient-to-tr from-red-800 to-rose-700 text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0"
@@ -356,26 +356,26 @@ export default function Employees() {
           <p className="text-xs text-slate-600 mt-1">ลองเปลี่ยนคำค้นหาหรือตัวกรองภาควิชา</p>
         </div>
       ) : viewMode === "grid" ? (
-        /* Large Photo Portrait Cards View */
+        /* Balanced Portrait Cards View */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {employees.map((emp) => (
             <div
               key={emp.id}
-              className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between group"
+              className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between group"
             >
               <div>
                 {/* Top Card Banner */}
-                <div className="h-20 sm:h-22 bg-gradient-to-r from-slate-900 via-red-950 to-red-900 relative p-3.5 flex justify-end items-start overflow-hidden">
-                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-red-600/20 rounded-full blur-xl pointer-events-none"></div>
-                  <RoleBadge role={emp.role} className="shadow-xs bg-white/95 backdrop-blur-xs text-[11px] relative z-10" />
+                <div className="h-16 sm:h-20 bg-gradient-to-r from-slate-900 via-red-950 to-red-900 relative p-3 flex justify-end items-start">
+                  <div className="absolute -top-10 -left-10 w-28 h-28 bg-red-600/20 rounded-full blur-xl pointer-events-none"></div>
+                  <RoleBadge role={emp.role} className="shadow-xs bg-white/95 backdrop-blur-xs text-[11px] font-bold" />
                 </div>
 
-                {/* Big Photo / Avatar Container */}
-                <div className="px-5 -mt-10 sm:-mt-12 flex flex-col items-center text-center">
+                {/* Photo / Avatar Container (relative z-10 ensures it floats OVER the banner) */}
+                <div className="relative z-10 px-4 -mt-10 flex flex-col items-center text-center">
                   <EmployeeAvatar src={emp.profile_image} name={emp.full_name} size="large" />
 
                   {/* Name & Code */}
-                  <h3 className="font-extrabold text-slate-900 text-base mt-2.5 leading-snug group-hover:text-red-900 transition">
+                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base mt-2.5 leading-snug group-hover:text-red-900 transition line-clamp-1">
                     {emp.full_name}
                   </h3>
                   <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
@@ -389,41 +389,43 @@ export default function Employees() {
                   </p>
                 </div>
 
-                {/* Contact & Info Details */}
-                <div className="px-5 mt-4 pt-3.5 border-t border-slate-100 space-y-2 text-xs text-slate-600">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
-                      <Building className="w-3.5 h-3.5" />
-                    </div>
+                {/* Department & Quick Contact Grid (Compact & Balanced for iOS & Android) */}
+                <div className="px-4 mt-3 pt-3 border-t border-slate-100 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span className="truncate">{emp.department_name || "สำนักงานคณะวิศวกรรมศาสตร์"}</span>
                   </div>
-                  <a
-                    href={`mailto:${emp.email}`}
-                    className="flex items-center gap-2.5 p-1 -m-1 rounded-lg hover:bg-slate-50 transition group/contact"
-                    title="ส่งอีเมล"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center shrink-0 text-red-700">
-                      <Mail className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="truncate text-slate-700 font-medium group-hover/contact:text-red-800">{emp.email}</span>
-                  </a>
-                  {emp.phone && (
+
+                  <div className="grid grid-cols-2 gap-1.5 text-xs">
                     <a
-                      href={`tel:${emp.phone}`}
-                      className="flex items-center gap-2.5 p-1 -m-1 rounded-lg hover:bg-slate-50 transition group/phone"
-                      title="โทรออก"
+                      href={`mailto:${emp.email}`}
+                      className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-800 transition truncate border border-slate-100"
+                      title={emp.email}
                     >
-                      <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 text-emerald-700">
-                        <Phone className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-slate-700 group-hover/phone:text-emerald-800 font-medium">{emp.phone}</span>
+                      <Mail className="w-3 h-3 text-red-700 shrink-0" />
+                      <span className="truncate text-[11px] font-medium">{emp.email}</span>
                     </a>
-                  )}
+                    {emp.phone ? (
+                      <a
+                        href={`tel:${emp.phone}`}
+                        className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 transition truncate border border-slate-100"
+                        title={emp.phone}
+                      >
+                        <Phone className="w-3 h-3 text-emerald-700 shrink-0" />
+                        <span className="truncate text-[11px] font-medium">{emp.phone}</span>
+                      </a>
+                    ) : (
+                      <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-50/50 text-slate-400 border border-slate-100 truncate">
+                        <Phone className="w-3 h-3 text-slate-300 shrink-0" />
+                        <span className="text-[11px]">-</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div className="p-3.5 sm:p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2 mt-4">
+              <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2 mt-3">
                 <button
                   onClick={() => handleOpenDetail(emp)}
                   className="flex-1 text-xs font-bold text-slate-800 hover:text-red-800 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:bg-slate-50 hover:border-red-300 transition"
@@ -436,14 +438,14 @@ export default function Employees() {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleOpenEdit(emp)}
-                      className="p-2 text-slate-500 hover:text-blue-600 hover:bg-white rounded-xl transition shadow-2xs border border-transparent hover:border-slate-200"
+                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-white rounded-xl transition shadow-2xs border border-transparent hover:border-slate-200"
                       title="แก้ไขข้อมูล"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(emp.id)}
-                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-white rounded-xl transition shadow-2xs border border-transparent hover:border-slate-200"
+                      className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-white rounded-xl transition shadow-2xs border border-transparent hover:border-slate-200"
                       title="ลบข้อมูล"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
