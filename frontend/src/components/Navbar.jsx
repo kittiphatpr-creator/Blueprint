@@ -87,28 +87,28 @@ export default function Navbar({ onToggleSidebar }) {
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-xs backdrop-blur-md bg-white/95">
-      <div className="flex items-center justify-between px-4 sm:px-6 h-16">
+      <div className="flex items-center justify-between px-3 sm:px-6 h-16">
         {/* ฝั่งซ้าย: ปุ่มเปิดเมนูมือถือ + โลโก้คณะ */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="lg:hidden p-2 -ml-1 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition shrink-0"
             title="เปิดเมนู"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link to="/dashboard" className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
             <img
               src="/logo.png"
               alt="ตราคณะวิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยกาฬสินธุ์"
-              className="w-10 h-10 object-contain drop-shadow-xs shrink-0"
+              className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow-xs shrink-0"
             />
-            <div>
-              <h1 className="text-base sm:text-lg font-extrabold text-slate-800 tracking-tight leading-none">
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-extrabold text-slate-800 tracking-tight leading-none truncate">
                 คณะวิศวกรรมศาสตร์ฯ
               </h1>
-              <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-slate-600 font-medium mt-0.5 truncate">
                 มหาวิทยาลัยกาฬสินธุ์ • HR & Leave System
               </p>
             </div>

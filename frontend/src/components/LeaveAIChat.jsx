@@ -46,15 +46,16 @@ export default function LeaveAIChat() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed z-40 bottom-20 lg:bottom-6 right-4 sm:right-6 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-red-800 to-red-600 text-white font-semibold text-sm shadow-xl shadow-red-900/30 hover:scale-105 transition"
+          className="fixed z-40 bottom-20 lg:bottom-6 right-3 sm:right-6 flex items-center justify-center gap-2 p-3 sm:px-4 sm:py-3 rounded-full bg-gradient-to-r from-red-800 to-red-600 text-white font-semibold text-sm shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition border border-white/20"
+          title="ถาม AI เรื่องวันลา"
         >
-          <Sparkles className="w-5 h-5" />
+          <Sparkles className="w-5 h-5 shrink-0" />
           <span className="hidden sm:inline">ถาม AI เรื่องวันลา</span>
         </button>
       )}
 
       {open && (
-        <div className="fixed z-50 bottom-20 lg:bottom-6 right-2 sm:right-6 w-[calc(100vw-1rem)] sm:w-96 h-[70vh] max-h-[560px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+        <div className="fixed z-50 inset-x-2 bottom-20 lg:bottom-6 lg:inset-auto lg:right-6 w-auto sm:w-96 sm:left-auto h-[70vh] max-h-[560px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
           {/* Header */}
           <div className="bg-gradient-to-r from-red-900 to-red-700 text-white px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">

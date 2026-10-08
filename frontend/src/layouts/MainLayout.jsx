@@ -14,7 +14,7 @@ export default function MainLayout() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-32 lg:pb-8">
         {/* Navbar แถบด้านบน */}
         <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 

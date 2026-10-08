@@ -39,10 +39,10 @@ function EmployeeAvatar({ src, name, size = "large" }) {
         onError={() => setError(true)}
         className={
           size === "large"
-            ? "w-24 h-24 rounded-2xl object-cover shadow-lg border-4 border-white bg-white group-hover:scale-105 transition-transform"
+            ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl ring-4 ring-white bg-white group-hover:scale-105 transition-transform"
             : size === "modal"
-            ? "w-24 h-24 rounded-3xl object-cover shadow-lg border border-slate-200 shrink-0"
-            : "w-10 h-10 rounded-xl object-cover shadow-xs border border-slate-200 shrink-0"
+            ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl ring-4 ring-white shrink-0"
+            : "w-10 h-10 rounded-full object-cover shadow-xs border border-slate-200 shrink-0"
         }
       />
     );
@@ -52,10 +52,10 @@ function EmployeeAvatar({ src, name, size = "large" }) {
     <div
       className={
         size === "large"
-          ? "w-24 h-24 rounded-2xl bg-gradient-to-br from-red-900 via-red-800 to-slate-900 text-white font-black text-3xl flex items-center justify-center shadow-lg border-4 border-white group-hover:scale-105 transition-transform"
+          ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-red-800 via-rose-700 to-amber-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-xl ring-4 ring-white group-hover:scale-105 transition-transform tracking-wider"
           : size === "modal"
-          ? "w-24 h-24 rounded-3xl bg-gradient-to-br from-red-800 to-slate-900 text-white font-black text-4xl flex items-center justify-center shadow-lg shrink-0"
-          : "w-10 h-10 rounded-xl bg-gradient-to-br from-red-900 to-slate-900 text-white font-bold flex items-center justify-center text-sm shrink-0"
+          ? "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-red-800 via-rose-700 to-amber-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-xl ring-4 ring-white shrink-0"
+          : "w-10 h-10 rounded-full bg-gradient-to-tr from-red-800 to-rose-700 text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0"
       }
     >
       {initial}
@@ -216,23 +216,24 @@ export default function Employees() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            ระบบจัดเก็บและค้นหาข้อมูลบุคลากร
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            ทำเนียบบุคลากร
           </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            ทำเนียบคณาจารย์และเจ้าหน้าที่ คณะวิศวกรรมศาสตร์ ({employees.length} ท่าน)
+          <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+            คณาจารย์และเจ้าหน้าที่ คณะวิศวกรรมศาสตร์ ({employees.length} ท่าน)
           </p>
         </div>
 
         {isAdmin && (
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-800 hover:bg-red-900 text-white font-bold rounded-xl text-sm shadow-md shadow-red-900/20 transition self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-red-800 hover:bg-red-900 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-red-900/20 transition shrink-0"
           >
             <UserPlus className="w-4 h-4" />
-            เพิ่มบุคลากรใหม่
+            <span className="hidden sm:inline">เพิ่มบุคลากรใหม่</span>
+            <span className="sm:hidden">เพิ่มบุคลากร</span>
           </button>
         )}
       </div>
@@ -240,7 +241,7 @@ export default function Employees() {
       {/* Notification Toast */}
       {message.text && (
         <div
-          className={`p-4 rounded-xl flex items-center justify-between text-sm ${
+          className={`p-4 rounded-2xl flex items-center justify-between text-sm ${
             message.type === "success"
               ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
               : "bg-red-50 text-red-800 border border-red-200"
@@ -257,87 +258,89 @@ export default function Employees() {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         <form onSubmit={handleSearchSubmit} className="flex-1 w-full flex gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="ค้นหาชื่อ, รหัสบุคลากร, ตำแหน่ง หรืออีเมล..."
+              placeholder="ค้นหาชื่อ, รหัส, ตำแหน่ง หรืออีเมล..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800 transition"
+              className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800 transition"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => { setSearch(""); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs p-1"
+                title="ล้างคำค้นหา"
+              >
+                ✕
+              </button>
+            )}
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition"
+            className="px-4 py-2.5 bg-red-800 hover:bg-red-900 text-white text-xs sm:text-sm font-bold rounded-2xl shadow-xs transition shrink-0"
           >
             ค้นหา
           </button>
         </form>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           {/* Department Filter */}
-          <select
-            value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-red-800"
-          >
-            <option value="">ทุกภาควิชา</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex-1 md:flex-initial">
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-red-800 font-medium"
+            >
+              <option value="">ทุกภาควิชา</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Role Filter */}
-          <select
-            value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-red-800"
-          >
-            <option value="">ทุกบทบาท</option>
-            <option value="lecturer">อาจารย์</option>
-            <option value="head">หัวหน้าสาขา</option>
-            <option value="staff">เจ้าหน้าที่</option>
-            <option value="admin">ผู้ดูแลระบบ</option>
-          </select>
+          <div className="flex-1 md:flex-initial">
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-red-800 font-medium"
+            >
+              <option value="">ทุกบทบาท</option>
+              <option value="lecturer">อาจารย์</option>
+              <option value="head">หัวหน้าสาขา</option>
+              <option value="staff">เจ้าหน้าที่</option>
+              <option value="admin">ผู้ดูแลระบบ</option>
+            </select>
+          </div>
 
           {/* View Mode Toggle */}
-          <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-0.5 shrink-0">
+          <div className="flex border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 p-0.5 shrink-0">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-lg transition ${
-                viewMode === "grid" ? "bg-white text-red-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              className={`p-2 rounded-xl transition ${
+                viewMode === "grid" ? "bg-white text-red-800 shadow-2xs font-bold" : "text-slate-500 hover:text-slate-800"
               }`}
-              title="มุมมองแบบการ์ดภาพใหญ่"
+              title="มุมมองแบบการ์ดภาพ"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("table")}
-              className={`p-1.5 rounded-lg transition ${
-                viewMode === "table" ? "bg-white text-red-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              className={`p-2 rounded-xl transition ${
+                viewMode === "table" ? "bg-white text-red-800 shadow-2xs font-bold" : "text-slate-500 hover:text-slate-800"
               }`}
-              title="มุมมองแบบตาราง"
+              title="มุมมองแบบรายชื่อ"
             >
               <List className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Quick Add Button in Toolbar */}
-          {isAdmin && (
-            <button
-              onClick={handleOpenAdd}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-red-800 hover:bg-red-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition shrink-0"
-              title="เพิ่มข้อมูลบุคลากรใหม่"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>เพิ่มบุคลากร</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -354,7 +357,7 @@ export default function Employees() {
         </div>
       ) : viewMode === "grid" ? (
         /* Large Photo Portrait Cards View */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {employees.map((emp) => (
             <div
               key={emp.id}
@@ -362,72 +365,88 @@ export default function Employees() {
             >
               <div>
                 {/* Top Card Banner */}
-                <div className="h-20 bg-gradient-to-r from-red-900 via-red-800 to-slate-900 relative p-3">
-                  <div className="flex justify-end">
-                    <RoleBadge role={emp.role} className="shadow-xs bg-white/95 backdrop-blur-xs" />
-                  </div>
+                <div className="h-20 sm:h-22 bg-gradient-to-r from-slate-900 via-red-950 to-red-900 relative p-3.5 flex justify-end items-start overflow-hidden">
+                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-red-600/20 rounded-full blur-xl pointer-events-none"></div>
+                  <RoleBadge role={emp.role} className="shadow-xs bg-white/95 backdrop-blur-xs text-[11px] relative z-10" />
                 </div>
 
                 {/* Big Photo / Avatar Container */}
-                <div className="px-5 -mt-12 flex flex-col items-center text-center">
+                <div className="px-5 -mt-10 sm:-mt-12 flex flex-col items-center text-center">
                   <EmployeeAvatar src={emp.profile_image} name={emp.full_name} size="large" />
 
                   {/* Name & Code */}
-                  <h3 className="font-extrabold text-slate-900 text-base mt-3 leading-snug group-hover:text-red-900 transition">
+                  <h3 className="font-extrabold text-slate-900 text-base mt-2.5 leading-snug group-hover:text-red-900 transition">
                     {emp.full_name}
                   </h3>
-                  <p className="text-xs font-mono font-semibold text-red-800 mt-0.5">
-                    {emp.employee_code}
-                  </p>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5 line-clamp-1">
+                  <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 text-red-800 text-[11px] font-mono font-bold border border-red-200/70">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                      {emp.employee_code}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-1">
                     {emp.position || "อาจารย์ประจำสาขาวิชา"}
                   </p>
                 </div>
 
                 {/* Contact & Info Details */}
-                <div className="px-5 mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <div className="px-5 mt-4 pt-3.5 border-t border-slate-100 space-y-2 text-xs text-slate-600">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
+                      <Building className="w-3.5 h-3.5" />
+                    </div>
                     <span className="truncate">{emp.department_name || "สำนักงานคณะวิศวกรรมศาสตร์"}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate text-slate-700 font-medium">{emp.email}</span>
-                  </div>
-                  {emp.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>{emp.phone}</span>
+                  <a
+                    href={`mailto:${emp.email}`}
+                    className="flex items-center gap-2.5 p-1 -m-1 rounded-lg hover:bg-slate-50 transition group/contact"
+                    title="ส่งอีเมล"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center shrink-0 text-red-700">
+                      <Mail className="w-3.5 h-3.5" />
                     </div>
+                    <span className="truncate text-slate-700 font-medium group-hover/contact:text-red-800">{emp.email}</span>
+                  </a>
+                  {emp.phone && (
+                    <a
+                      href={`tel:${emp.phone}`}
+                      className="flex items-center gap-2.5 p-1 -m-1 rounded-lg hover:bg-slate-50 transition group/phone"
+                      title="โทรออก"
+                    >
+                      <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 text-emerald-700">
+                        <Phone className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-slate-700 group-hover/phone:text-emerald-800 font-medium">{emp.phone}</span>
+                    </a>
                   )}
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div className="p-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between mt-5">
+              <div className="p-3.5 sm:p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2 mt-4">
                 <button
                   onClick={() => handleOpenDetail(emp)}
-                  className="text-xs font-bold text-slate-700 hover:text-red-800 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:bg-slate-50 transition"
+                  className="flex-1 text-xs font-bold text-slate-800 hover:text-red-800 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:bg-slate-50 hover:border-red-300 transition"
                 >
-                  <Eye className="w-3.5 h-3.5 text-slate-500" />
-                  ดูข้อมูลและวันลา
+                  <Eye className="w-3.5 h-3.5 text-red-800 shrink-0" />
+                  <span>ดูข้อมูลและวันลา</span>
                 </button>
 
                 {isAdmin && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleOpenEdit(emp)}
-                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shadow-2xs"
+                      className="p-2 text-slate-500 hover:text-blue-600 hover:bg-white rounded-xl transition shadow-2xs border border-transparent hover:border-slate-200"
                       title="แก้ไขข้อมูล"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(emp.id)}
-                      className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-white rounded-lg transition shadow-2xs"
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-white rounded-xl transition shadow-2xs border border-transparent hover:border-slate-200"
                       title="ลบข้อมูล"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
@@ -436,9 +455,57 @@ export default function Employees() {
           ))}
         </div>
       ) : (
-        /* Table View */
+        /* Table / List View */
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile Contact List (< md) */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {employees.map((emp) => (
+              <div key={emp.id} className="p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition">
+                <div className="flex items-center gap-3 min-w-0" onClick={() => handleOpenDetail(emp)}>
+                  <EmployeeAvatar src={emp.profile_image} name={emp.full_name} size="small" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">{emp.full_name}</p>
+                    <p className="text-xs text-slate-500 truncate">{emp.position || emp.department_name || "-"}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-mono text-red-800 font-semibold">{emp.employee_code}</span>
+                      <RoleBadge role={emp.role} className="text-[10px] px-1.5 py-0" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleOpenDetail(emp)}
+                    className="p-2 rounded-xl text-slate-500 hover:text-red-800 hover:bg-slate-100 transition"
+                    title="ดูข้อมูล"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleOpenEdit(emp)}
+                        className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition"
+                        title="แก้ไข"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(emp.id)}
+                        className="p-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 transition"
+                        title="ลบ"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table (>= md) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
                 <tr>
