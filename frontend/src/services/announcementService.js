@@ -7,12 +7,18 @@ export const announcementService = {
   },
 
   async createAnnouncement(data) {
-    const response = await api.post("/announcements", data);
+    const isFormData = data instanceof FormData;
+    const response = await api.post("/announcements", data, {
+      headers: isFormData ? { "Content-Type": "multipart/form-data" } : {},
+    });
     return response.data;
   },
 
   async updateAnnouncement(id, data) {
-    const response = await api.put(`/announcements/${id}`, data);
+    const isFormData = data instanceof FormData;
+    const response = await api.put(`/announcements/${id}`, data, {
+      headers: isFormData ? { "Content-Type": "multipart/form-data" } : {},
+    });
     return response.data;
   },
 

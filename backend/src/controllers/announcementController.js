@@ -16,13 +16,16 @@ async function getAll(req, res) {
 }
 
 async function create(req, res) {
-  const { title, content, image_url } = req.body;
+  let { title, content, image_url } = req.body;
+  if (req.file) {
+    image_url = `/uploads/${req.file.filename}`;
+  }
 
   try {
     const result = await pool.query(
       `INSERT INTO announcements (title, content, posted_by, image_url)
        VALUES ($1,$2,$3,$4) RETURNING *`,
-      [title, content, req.user.id, image_url]
+      [title, content, req.user.id, image_url || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -32,12 +35,15 @@ async function create(req, res) {
 }
 
 async function update(req, res) {
-  const { title, content, image_url } = req.body;
+  let { title, content, image_url } = req.body;
+  if (req.file) {
+    image_url = `/uploads/${req.file.filename}`;
+  }
 
   try {
     const result = await pool.query(
       `UPDATE announcements SET title=$1, content=$2, image_url=$3 WHERE id=$4 RETURNING *`,
-      [title, content, image_url, req.params.id]
+      [title, content, image_url || null, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "ไม่พบประกาศ" });

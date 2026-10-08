@@ -14,6 +14,9 @@ import {
   CheckCircle,
   AlertCircle,
   Eye,
+  ImageIcon,
+  UploadCloud,
+  X,
 } from "lucide-react";
 
 export default function Announcements() {
@@ -33,6 +36,8 @@ export default function Announcements() {
     content: "",
     image_url: "",
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -57,6 +62,8 @@ export default function Announcements() {
   const handleOpenAdd = () => {
     setIsEditMode(false);
     setFormData({ id: null, title: "", content: "", image_url: "" });
+    setImageFile(null);
+    setImagePreview("");
     setIsFormOpen(true);
   };
 
@@ -68,7 +75,27 @@ export default function Announcements() {
       content: item.content,
       image_url: item.image_url || "",
     });
+    setImageFile(null);
+    setImagePreview(item.image_url || "");
     setIsFormOpen(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setMessage({ text: "ขนาดไฟล์รูปภาพต้องไม่เกิน 10MB", type: "error" });
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData((prev) => ({ ...prev, image_url: "" }));
   };
 
   const handleSave = async (e) => {
@@ -77,11 +104,25 @@ export default function Announcements() {
     setMessage({ text: "", type: "" });
 
     try {
+      let payload;
+      if (imageFile) {
+        payload = new FormData();
+        payload.append("title", formData.title);
+        payload.append("content", formData.content);
+        payload.append("image", imageFile);
+      } else {
+        payload = {
+          title: formData.title,
+          content: formData.content,
+          image_url: imagePreview ? formData.image_url : null,
+        };
+      }
+
       if (isEditMode) {
-        await announcementService.updateAnnouncement(formData.id, formData);
+        await announcementService.updateAnnouncement(formData.id, payload);
         setMessage({ text: "อัปเดตประกาศเรียบร้อยแล้ว", type: "success" });
       } else {
-        await announcementService.createAnnouncement(formData);
+        await announcementService.createAnnouncement(payload);
         setMessage({ text: "เพิ่มประกาศใหม่เรียบร้อยแล้ว", type: "success" });
       }
       setIsFormOpen(false);
@@ -172,6 +213,21 @@ export default function Announcements() {
               className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
             >
               <div>
+                {/* Optional Announcement Banner Image */}
+                {item.image_url && (
+                  <div
+                    onClick={() => setViewItem(item)}
+                    className="mb-4 -mx-2 -mt-2 rounded-2xl overflow-hidden bg-slate-100 max-h-48 border border-slate-100 cursor-pointer group"
+                  >
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                      className="w-full h-40 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-xs text-slate-600 mb-3">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -232,6 +288,16 @@ export default function Announcements() {
       >
         {viewItem && (
           <div className="space-y-4">
+            {viewItem.image_url && (
+              <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-900/5 max-h-96">
+                <img
+                  src={viewItem.image_url}
+                  alt={viewItem.title}
+                  className="w-full max-h-96 object-contain mx-auto"
+                />
+              </div>
+            )}
+
             <div>
               <h2 className="text-lg font-bold text-slate-900 leading-snug">{viewItem.title}</h2>
               <div className="flex items-center gap-4 text-xs text-slate-600 mt-2">
@@ -281,6 +347,49 @@ export default function Announcements() {
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
             />
+          </div>
+
+          {/* Image Upload Field */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              รูปภาพประกอบประกาศ <span className="text-slate-400 font-normal">(ถ้ามี)</span>
+            </label>
+
+            {imagePreview ? (
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 group">
+                <img
+                  src={imagePreview}
+                  alt="ตัวอย่างรูปประกาศ"
+                  className="w-full h-48 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition"
+                  title="ลบรูปภาพ"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-red-400 bg-slate-50 hover:bg-red-50/30 rounded-2xl p-5 cursor-pointer transition text-center group">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-800 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-700 group-hover:text-red-900">
+                  คลิกเพื่อเลือกไฟล์รูปภาพ
+                </span>
+                <span className="text-[11px] text-slate-400 mt-0.5">
+                  รองรับไฟล์ PNG, JPG, JPEG, WebP (ไม่เกิน 10MB)
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
