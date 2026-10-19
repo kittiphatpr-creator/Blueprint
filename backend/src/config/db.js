@@ -363,15 +363,71 @@ async function ensureAdminUser() {
   }
 }
 
+// ฟังก์ชันสร้างตารางและ Seed ข้อมูลลง PostgreSQL อัตโนมัติ (กรณีเพิ่งเชื่อมต่อ DB บน Cloud ใหม่)
+async function initPostgres() {
+  try {
+    const checkTable = await pgPool.query(`
+      SELECT to_regclass('public.users') AS exists;
+    `);
+
+    if (!checkTable.rows[0].exists) {
+      console.log("⚡ กำลังสร้างโครงสร้างตารางและข้อมูลตั้งต้นใน PostgreSQL บน Cloud อัตโนมัติ...");
+      const schemaPath = path.join(__dirname, "../../schema.sql");
+      if (fs.existsSync(schemaPath)) {
+        const schemaSql = fs.readFileSync(schemaPath, "utf-8");
+        await pgPool.query(schemaSql);
+      }
+
+      // Seed ข้อมูลบัญชีเริ่มต้น
+      const pwAdmin = await bcrypt.hash("admin1234", 10);
+      const pwHead = await bcrypt.hash("head1234", 10);
+      const pwStaff = await bcrypt.hash("staff1234", 10);
+      const pwUser = await bcrypt.hash("user1234", 10);
+
+      const users = [
+        ["ENG-ADM01", "ผู้ดูแลระบบ คณะวิศวกรรมศาสตร์", "admin@eng.ac.th", pwAdmin, 1, "ผู้อำนวยการฝ่ายเทคโนโลยีสารสนเทศ", "admin", "02-123-4567"],
+        ["ENG-STF01", "นางสาวสมศรี จัดการงาน", "staff@eng.ac.th", pwStaff, null, "เจ้าหน้าที่บริหารงานทั่วไป (งานบุคคล)", "staff", "081-234-5678"],
+        ["ENG-HOD01", "รศ.ดร.วิศวกิจ นวัตกรรม", "head.cpe@eng.ac.th", pwHead, 1, "หัวหน้าภาควิชาวิศวกรรมคอมพิวเตอร์", "head", "082-345-6789"],
+        ["ENG-HOD02", "ศ.ดร.ธนากร ไฟฟ้าพลังงาน", "head.ee@eng.ac.th", pwHead, 2, "หัวหน้าภาควิชาวิศวกรรมไฟฟ้า", "head", "083-456-7890"],
+        ["ENG-LEC01", "ผศ.ดร.สมชาย ปัญญาประดิษฐ์", "somchai.cpe@eng.ac.th", pwUser, 1, "อาจารย์ประจำภาควิชาวิศวกรรมคอมพิวเตอร์", "lecturer", "084-567-8901"],
+        ["ENG-LEC02", "อ.ดร.สุดา สัญญาณอัจฉริยะ", "suda.ee@eng.ac.th", pwUser, 2, "อาจารย์ประจำภาควิชาวิศวกรรมไฟฟ้า", "lecturer", "085-678-9012"],
+        ["ENG-LEC03", "ผศ.อนันต์ โครงสร้างมั่นคง", "anant.ce@eng.ac.th", pwUser, 3, "อาจารย์ประจำภาควิชาวิศวกรรมโยธา", "lecturer", "089-012-3456"],
+        ["ENG-LEC04", "อ.วิชัย ยานยนต์พลังงานใหม่", "wichai.me@eng.ac.th", pwUser, 4, "อาจารย์ประจำภาควิชาวิศวกรรมเครื่องกล", "lecturer", "086-789-0123"],
+      ];
+
+      for (const u of users) {
+        await pgPool.query(
+          `INSERT INTO users (employee_code, full_name, email, password_hash, department_id, position, role, phone)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (email) DO NOTHING`,
+          u
+        );
+      }
+
+      // Add attachment_url column if needed
+      try {
+        await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS image_url TEXT;");
+        await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS attachment_url TEXT;");
+      } catch (e) {}
+
+      console.log("✅ สร้างตารางและข้อมูลเริ่มต้นใน PostgreSQL สำเร็จเรียบร้อย!");
+    } else {
+      try {
+        await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS image_url TEXT;");
+        await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS attachment_url TEXT;");
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.error("⚠️ ไม่สามารถสร้างตารางเริ่มต้นใน PostgreSQL ได้:", err.message);
+  }
+}
+
 // ทดสอบ Connection ทันทีตอนเริ่มระบบ
 (async function testInit() {
   try {
     await pgPool.query("SELECT 1");
     console.log("✅ เชื่อมต่อฐานข้อมูล PostgreSQL สำเร็จ");
-    try {
-      await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS image_url TEXT;");
-      await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS attachment_url TEXT;");
-    } catch (e) {}
+    await initPostgres();
   } catch (err) {
     console.log("ℹ️ ไม่พบ PostgreSQL (หรือยังไม่ได้เปิด pgAdmin) -> สลับใช้งาน Local SQLite อัตโนมัติ พร้อมใช้งานทันที!");
     useSqlite = true;

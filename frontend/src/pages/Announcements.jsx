@@ -22,6 +22,38 @@ import {
   Download,
 } from "lucide-react";
 
+// บีบอัดและย่อขนาดรูปภาพแบนเนอร์ข่าวเป็น Base64 (~50-90KB) เพื่อให้บันทึกถาวรลงในฐานข้อมูลและ local cache
+function compressImage(file, maxWidth = 1000, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}
+
 export default function Announcements() {
   const { user } = useAuth();
   const canManage = canManageAnnouncements(user?.role);
@@ -51,10 +83,56 @@ export default function Announcements() {
   const loadAnnouncements = async () => {
     setLoading(true);
     try {
-      const data = await announcementService.getAnnouncements();
-      setAnnouncements(data);
+      const serverData = await announcementService.getAnnouncements();
+      const localDataRaw = localStorage.getItem("ksu_custom_announcements");
+      const localData = localDataRaw ? JSON.parse(localDataRaw) : [];
+
+      // ตรวจสอบข่าวที่ผู้ใช้เคยสร้างไว้ แต่เซิร์ฟเวอร์ยังไม่มี (เกิดจาก Render Free รีเซ็ตคอนเทนเนอร์)
+      const missingOnServer = localData.filter(
+        (localItem) => !serverData.some((s) => s.title === localItem.title)
+      );
+
+      if (missingOnServer.length > 0) {
+        // นำข่าวที่อยู่ใน Cache มารวมแสดงผลทันที ข่าวจะไม่มีวันหายไปจากหน้าจอ
+        const mergedMap = new Map();
+        [...missingOnServer, ...serverData].forEach((item) => {
+          mergedMap.set(item.title, item);
+        });
+        const mergedList = Array.from(mergedMap.values());
+        setAnnouncements(mergedList);
+
+        // หากเป็น Admin/Staff ให้ทำการส่งไปกู้คืน (Self-Healing Sync) ลงเซิร์ฟเวอร์ให้อัตโนมัติ
+        if (canManage) {
+          for (const item of missingOnServer) {
+            try {
+              await announcementService.createAnnouncement({
+                title: item.title,
+                content: item.content,
+                image_url: item.image_url || null,
+                attachment_url: item.attachment_url || null,
+              });
+            } catch (syncErr) {
+              console.warn("Auto-healing sync error:", syncErr);
+            }
+          }
+          const refreshed = await announcementService.getAnnouncements();
+          setAnnouncements(refreshed);
+        }
+      } else {
+        setAnnouncements(serverData);
+        // บันทึกเฉพาะข่าวที่สร้างเพิ่มเติม (id > 3) ลง cache ไว้สำรอง
+        const nonSeed = serverData.filter((s) => s.id > 3);
+        if (nonSeed.length > 0) {
+          localStorage.setItem("ksu_custom_announcements", JSON.stringify(nonSeed));
+        }
+      }
     } catch (err) {
       console.error(err);
+      // หากเชื่อมต่อเซิร์ฟเวอร์ไม่ได้หรือกำลังตื่น แสดงข้อมูลจาก Local Cache ทันที
+      const localDataRaw = localStorage.getItem("ksu_custom_announcements");
+      if (localDataRaw) {
+        setAnnouncements(JSON.parse(localDataRaw));
+      }
     } finally {
       setLoading(false);
     }
@@ -88,15 +166,22 @@ export default function Announcements() {
     setIsFormOpen(true);
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setMessage({ text: "ขนาดไฟล์รูปภาพต้องไม่เกิน 10MB", type: "error" });
+      if (!file.type.startsWith("image/")) {
+        setMessage({ text: "กรุณาเลือกไฟล์รูปภาพเท่านั้น (.jpg, .png, .webp)", type: "error" });
         return;
       }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      try {
+        const compressedBase64 = await compressImage(file, 1000, 0.82);
+        setImagePreview(compressedBase64);
+        setFormData((prev) => ({ ...prev, image_url: compressedBase64 }));
+        setImageFile(file);
+      } catch (err) {
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+      }
     }
   };
 
@@ -128,29 +213,61 @@ export default function Announcements() {
     setMessage({ text: "", type: "" });
 
     try {
-      const payload = new FormData();
-      payload.append("title", formData.title);
-      payload.append("content", formData.content);
-
-      if (imageFile) {
-        payload.append("image", imageFile);
-      } else {
-        payload.append("image_url", imagePreview ? formData.image_url : "");
+      let finalImageUrl = formData.image_url;
+      if (imageFile && imagePreview && imagePreview.startsWith("data:image/")) {
+        finalImageUrl = imagePreview;
       }
 
+      let res;
       if (attachmentFile) {
+        const payload = new FormData();
+        payload.append("title", formData.title);
+        payload.append("content", formData.content);
+        payload.append("image_url", finalImageUrl || "");
         payload.append("attachment", attachmentFile);
+
+        if (isEditMode) {
+          res = await announcementService.updateAnnouncement(formData.id, payload);
+        } else {
+          res = await announcementService.createAnnouncement(payload);
+        }
       } else {
-        payload.append("attachment_url", formData.attachment_url || "");
+        const payload = {
+          title: formData.title,
+          content: formData.content,
+          image_url: finalImageUrl || null,
+          attachment_url: formData.attachment_url || null,
+        };
+
+        if (isEditMode) {
+          res = await announcementService.updateAnnouncement(formData.id, payload);
+        } else {
+          res = await announcementService.createAnnouncement(payload);
+        }
       }
+
+      // บันทึกลง Local Storage ทันที เพื่อให้ข่าวไม่หายแม้เซิร์ฟเวอร์จะหลับหรือรีเซ็ต
+      const savedItem = {
+        id: res?.id || Date.now(),
+        title: formData.title,
+        content: formData.content,
+        image_url: finalImageUrl || null,
+        attachment_url: res?.attachment_url || formData.attachment_url || null,
+        created_at: res?.created_at || new Date().toISOString(),
+        posted_by_name: res?.posted_by_name || user?.full_name || "ผู้ดูแลระบบ",
+      };
+
+      const localDataRaw = localStorage.getItem("ksu_custom_announcements");
+      let localData = localDataRaw ? JSON.parse(localDataRaw) : [];
 
       if (isEditMode) {
-        await announcementService.updateAnnouncement(formData.id, payload);
-        setMessage({ text: "อัปเดตประกาศเรียบร้อยแล้ว", type: "success" });
+        localData = localData.map((item) => (item.id === formData.id || item.title === formData.title ? savedItem : item));
       } else {
-        await announcementService.createAnnouncement(payload);
-        setMessage({ text: "เพิ่มประกาศใหม่เรียบร้อยแล้ว", type: "success" });
+        localData = [savedItem, ...localData.filter((item) => item.title !== formData.title)];
       }
+      localStorage.setItem("ksu_custom_announcements", JSON.stringify(localData));
+
+      setMessage({ text: isEditMode ? "อัปเดตประกาศเรียบร้อยแล้ว" : "เพิ่มประกาศใหม่เรียบร้อยแล้ว", type: "success" });
       setIsFormOpen(false);
       loadAnnouncements();
     } catch (err) {
@@ -167,6 +284,13 @@ export default function Announcements() {
     setActionLoading(true);
     try {
       await announcementService.deleteAnnouncement(id);
+      // นำออกจาก Local Cache ด้วย
+      const localDataRaw = localStorage.getItem("ksu_custom_announcements");
+      if (localDataRaw) {
+        const localData = JSON.parse(localDataRaw);
+        const filtered = localData.filter((item) => item.id !== id);
+        localStorage.setItem("ksu_custom_announcements", JSON.stringify(filtered));
+      }
       setMessage({ text: "ลบประกาศเรียบร้อยแล้ว", type: "success" });
       setDeleteConfirmId(null);
       loadAnnouncements();
