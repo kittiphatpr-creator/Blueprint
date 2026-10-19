@@ -18,6 +18,30 @@ import {
   Download,
 } from "lucide-react";
 
+// เปิดดูเอกสารแนบ/ใบรับรองแพทย์อย่างปลอดภัย รองรับทั้ง Base64 และ URL
+function openAttachment(url) {
+  if (!url) return;
+  if (url.startsWith("data:")) {
+    try {
+      const arr = url.split(",");
+      const mime = arr[0].match(/:(.*?);/)?.[1] || "application/octet-stream";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+    } catch {
+      window.open(url, "_blank");
+    }
+  } else {
+    window.open(url, "_blank");
+  }
+}
+
 export default function LeaveHistory() {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
@@ -226,14 +250,13 @@ export default function LeaveHistory() {
                   <Paperclip className="w-4 h-4 text-blue-600" />
                   <span>เอกสารแนบประกอบคำขอ</span>
                 </div>
-                <a
-                  href={selectedRequest.attachment_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-bold text-blue-700 hover:underline"
+                <button
+                  type="button"
+                  onClick={() => openAttachment(selectedRequest.attachment_url)}
+                  className="font-bold text-blue-700 hover:underline cursor-pointer"
                 >
                   เปิดดูเอกสาร
-                </a>
+                </button>
               </div>
             )}
 

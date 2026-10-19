@@ -13,7 +13,51 @@ import {
   AlertCircle,
   FileText,
   Info,
+  UploadCloud,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
+
+// บีบอัดรูปภาพเอกสารแนบ/ใบรับรองแพทย์ให้คมชัดแต่ขนาดเบา เพื่อเก็บเป็น Base64
+function compressImage(file, maxWidth = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}
+
+function readAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function LeaveRequest() {
   const { user } = useAuth();
@@ -35,6 +79,49 @@ export default function LeaveRequest() {
   const [daysCount, setDaysCount] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+
+  // File Upload State
+  const [attachmentMode, setAttachmentMode] = useState("file"); // "file" | "url"
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState("");
+  const [fileLoading, setFileLoading] = useState(false);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      setMessage({ text: "ขนาดไฟล์ต้องไม่เกิน 15MB", type: "error" });
+      return;
+    }
+
+    setFileLoading(true);
+    setMessage({ text: "", type: "" });
+
+    try {
+      if (file.type.startsWith("image/")) {
+        const compressed = await compressImage(file, 1200, 0.82);
+        setSelectedFile(file);
+        setFilePreview(compressed);
+        setFormData((prev) => ({ ...prev, attachment_url: compressed }));
+      } else {
+        const dataUrl = await readAsDataURL(file);
+        setSelectedFile(file);
+        setFilePreview(file.type === "application/pdf" ? "pdf" : "doc");
+        setFormData((prev) => ({ ...prev, attachment_url: dataUrl }));
+      }
+    } catch (err) {
+      setMessage({ text: "ไม่สามารถประมวลผลไฟล์ได้ กรุณาลองใหม่อีกครั้ง", type: "error" });
+    } finally {
+      setFileLoading(false);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview("");
+    setFormData((prev) => ({ ...prev, attachment_url: "" }));
+  };
 
   const loadBalances = async () => {
     try {
@@ -275,24 +362,124 @@ export default function LeaveRequest() {
             />
           </div>
 
-          {/* 4. เอกสารแนบ (Optional) */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              4. ลิงก์เอกสารแนบ / ใบรับรองแพทย์ (ถ้ามี)
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Paperclip className="w-4 h-4" />
+          {/* 4. เอกสารแนบ / ใบรับรองแพทย์ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                4. เอกสารแนบ / ใบรับรองแพทย์ (ถ้ามี)
+              </label>
+
+              {/* Toggle ระหว่าง อัปโหลดไฟล์ กับ ระบุลิงก์ */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setAttachmentMode("file")}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    attachmentMode === "file"
+                      ? "bg-white text-slate-900 shadow-xs font-bold"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  อัปโหลดไฟล์
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAttachmentMode("url")}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    attachmentMode === "url"
+                      ? "bg-white text-slate-900 shadow-xs font-bold"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  ระบุ URL ลิงก์
+                </button>
               </div>
-              <input
-                type="text"
-                placeholder="ระบุ URL หรือชื่อไฟล์เอกสารแนบ (เช่น /uploads/medical-cert.pdf)"
-                value={formData.attachment_url}
-                onChange={(e) => setFormData({ ...formData, attachment_url: e.target.value })}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
-              />
             </div>
-            <p className="text-[11px] text-slate-600 mt-1">
+
+            {attachmentMode === "file" ? (
+              <div>
+                {!selectedFile && !formData.attachment_url ? (
+                  <label className="border-2 border-dashed border-slate-200 hover:border-red-800/40 hover:bg-red-50/20 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition group">
+                    <input
+                      type="file"
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-800 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                      <UploadCloud className="w-6 h-6" />
+                    </div>
+                    <span className="text-sm font-bold text-slate-800">
+                      คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่
+                    </span>
+                    <span className="text-xs text-slate-500 mt-1">
+                      รองรับรูปภาพใบรับรองแพทย์ (.jpg, .png, .webp) หรือไฟล์ PDF (ขนาดไม่เกิน 15MB)
+                    </span>
+                  </label>
+                ) : (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      {filePreview && filePreview.startsWith("data:image/") ? (
+                        <img
+                          src={filePreview}
+                          alt="preview"
+                          className="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-red-100 text-red-800 flex items-center justify-center shrink-0">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div className="truncate">
+                        <p className="text-sm font-bold text-slate-800 truncate">
+                          {selectedFile ? selectedFile.name : "ไฟล์เอกสารแนบ"}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {selectedFile
+                            ? `${(selectedFile.size / 1024).toFixed(1)} KB`
+                            : "พร้อมส่งร่วมกับคำขอลา"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer transition">
+                        เปลี่ยนไฟล์
+                        <input
+                          type="file"
+                          accept="image/*,.pdf,.doc,.docx"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
+                        title="ลบไฟล์"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Paperclip className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="ระบุ URL ลิงก์เอกสาร เช่น Google Drive, OneDrive หรือ URL ภายนอก"
+                  value={formData.attachment_url}
+                  onChange={(e) => setFormData({ ...formData, attachment_url: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+                />
+              </div>
+            )}
+
+            <p className="text-[11px] text-slate-600">
               * กรณีลาป่วยตั้งแต่ 3 วันขึ้นไป โปรดแนบใบรับรองแพทย์ตามระเบียบมหาวิทยาลัย
             </p>
           </div>

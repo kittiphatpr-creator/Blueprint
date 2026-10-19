@@ -21,6 +21,30 @@ import {
   Download,
 } from "lucide-react";
 
+// เปิดดูเอกสารแนบ/ใบรับรองแพทย์อย่างปลอดภัย รองรับทั้ง Base64 และ URL
+function openAttachment(url) {
+  if (!url) return;
+  if (url.startsWith("data:")) {
+    try {
+      const arr = url.split(",");
+      const mime = arr[0].match(/:(.*?);/)?.[1] || "application/octet-stream";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+    } catch {
+      window.open(url, "_blank");
+    }
+  } else {
+    window.open(url, "_blank");
+  }
+}
+
 export default function LeaveApproval() {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
@@ -243,9 +267,13 @@ export default function LeaveApproval() {
                   {req.attachment_url && (
                     <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-700">
                       <Paperclip className="w-3.5 h-3.5" />
-                      <a href={req.attachment_url} target="_blank" rel="noreferrer" className="underline font-medium">
-                        ดูเอกสารแนบประกอบ
-                      </a>
+                      <button
+                        type="button"
+                        onClick={() => openAttachment(req.attachment_url)}
+                        className="underline font-medium hover:text-blue-900 cursor-pointer"
+                      >
+                        ดูเอกสารแนบ / ใบรับรองแพทย์
+                      </button>
                     </div>
                   )}
                 </div>
@@ -390,10 +418,16 @@ export default function LeaveApproval() {
 
             {detailModalReq.attachment_url && (
               <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between text-xs text-blue-900">
-                <span>เอกสารแนบ</span>
-                <a href={detailModalReq.attachment_url} target="_blank" rel="noreferrer" className="underline font-bold">
+                <span className="font-semibold flex items-center gap-1.5">
+                  <Paperclip className="w-4 h-4 text-blue-600" /> เอกสารแนบ / ใบรับรองแพทย์
+                </span>
+                <button
+                  type="button"
+                  onClick={() => openAttachment(detailModalReq.attachment_url)}
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer transition"
+                >
                   เปิดดูเอกสาร
-                </a>
+                </button>
               </div>
             )}
 
