@@ -1,3 +1,4 @@
+const pool = require("../config/db");
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -7,6 +8,7 @@ const {
   me,
   logout,
   loginWithGoogle,
+  registerWithGoogle,
   updateProfile,
   updateAvatar,
   changePassword,
@@ -25,6 +27,15 @@ const upload = multer({ storage });
 
 router.post("/login", login);
 router.post("/google", loginWithGoogle);
+router.post("/register-google", registerWithGoogle);
+router.get("/departments", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT id, name FROM departments ORDER BY id ASC");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: "ไม่สามารถดึงข้อมูลภาควิชาได้" });
+  }
+});
 router.get("/me", requireAuth, me);
 router.put("/profile", requireAuth, updateProfile);
 router.post("/avatar", requireAuth, upload.single("avatar"), updateAvatar);

@@ -65,6 +65,9 @@ export function AuthProvider({ children }) {
 
   const loginWithGoogle = async (credential) => {
     const data = await authService.loginWithGoogle(credential);
+    if (data.isNewUser) {
+      return data;
+    }
     const userObj = { ...data.user };
     const cachedAvatar = localStorage.getItem("profile_avatar_" + userObj.email?.toLowerCase());
 
@@ -75,6 +78,19 @@ export function AuthProvider({ children }) {
       localStorage.setItem("profile_avatar_" + userObj.email?.toLowerCase(), userObj.profile_image);
     }
 
+    setToken(data.token);
+    setUser(userObj);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(userObj));
+    return { isNewUser: false, user: userObj };
+  };
+
+  const registerWithGoogle = async (registrationData) => {
+    const data = await authService.registerWithGoogle(registrationData);
+    const userObj = { ...data.user };
+    if (userObj.profile_image) {
+      localStorage.setItem("profile_avatar_" + userObj.email?.toLowerCase(), userObj.profile_image);
+    }
     setToken(data.token);
     setUser(userObj);
     localStorage.setItem("token", data.token);
@@ -117,6 +133,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         loginWithGoogle,
+        registerWithGoogle,
         quickLogin,
         updateUserProfile,
         logout,

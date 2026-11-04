@@ -11,6 +11,16 @@ export const authService = {
     return response.data;
   },
 
+  async registerWithGoogle(data) {
+    const response = await api.post("/auth/register-google", data);
+    return response.data;
+  },
+
+  async getDepartments() {
+    const response = await api.get("/auth/departments");
+    return response.data;
+  },
+
   async getMe() {
     const response = await api.get("/auth/me");
     return response.data;

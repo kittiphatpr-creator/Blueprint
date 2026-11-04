@@ -224,24 +224,27 @@ async function loginWithGoogle(req, res) {
        FROM users u 
        LEFT JOIN departments d ON d.id = u.department_id 
        WHERE u.email = $1`,
-      [email]
+      [normalizedEmail]
     );
     let user = result.rows[0];
 
+    // กรณีเป็นผู้ใช้ใหม่ที่ยังไม่มีในฐานข้อมูล -> ให้หน้าบ้านเปิดฟอร์มสมัครสมาชิก
     if (!user) {
-      const employee_code = `G-${Date.now()}`;
-      const isOwnerAdmin = email.toLowerCase() === "phongsakorn.ka@ksu.ac.th" || email.toLowerCase().startsWith("admin");
-      const defaultRole = isOwnerAdmin ? "admin" : "lecturer";
+      return res.json({
+        isNewUser: true,
+        googleData: {
+          email: normalizedEmail,
+          name: name || "",
+          picture: picture || "",
+          googleId: googleId || "",
+        },
+      });
+    }
 
-      const insertResult = await pool.query(
-        `INSERT INTO users (employee_code, full_name, email, google_id, role, profile_image)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING *`,
-        [employee_code, name || email, email, googleId, defaultRole, picture]
-      );
-      user = insertResult.rows[0];
-    } else if (!user.google_id) {
+    // กรณีมีบัญชีอยู่แล้ว แต่ยังไม่ได้ผูก google_id
+    if (!user.google_id && googleId) {
       await pool.query("UPDATE users SET google_id = $1 WHERE id = $2", [googleId, user.id]);
+      user.google_id = googleId;
     }
 
     const token = jwt.sign(
@@ -252,11 +255,109 @@ async function loginWithGoogle(req, res) {
 
     delete user.password_hash;
 
-    res.json({ token, user });
+    res.json({ isNewUser: false, token, user });
   } catch (err) {
-    console.error(err);
+    console.error("Google login error:", err);
     res.status(401).json({ message: "ตรวจสอบ Google Token ไม่สำเร็จ" });
   }
 }
 
-module.exports = { login, me, updateProfile, updateAvatar, changePassword, logout, loginWithGoogle };
+/**
+ * POST /auth/register-google
+ * สมัครสมาชิกบุคลากรใหม่จากบัญชี Google และบันทึกลงฐานข้อมูล
+ */
+async function registerWithGoogle(req, res) {
+  const { googleData, employee_code, full_name, department_id, position, role, phone } = req.body;
+
+  if (!googleData || !googleData.email) {
+    return res.status(400).json({ message: "ไม่พบข้อมูลบัญชี Google สำหรับการลงทะเบียน" });
+  }
+
+  const email = String(googleData.email).trim().toLowerCase();
+  if (!email.endsWith("@ksu.ac.th")) {
+    return res.status(403).json({
+      message: `ไม่อนุญาตให้อีเมล (${email}) สมัครสมาชิก กรุณาใช้อีเมล @ksu.ac.th เท่านั้น`,
+    });
+  }
+
+  if (!full_name || !employee_code) {
+    return res.status(400).json({ message: "กรุณากรอกชื่อ-นามสกุล และรหัสบุคลากร" });
+  }
+
+  try {
+    // ตรวจสอบว่ามีอีเมลหรือรหัสบุคลากรนี้ในระบบแล้วหรือไม่
+    const existing = await pool.query(
+      "SELECT id, email, employee_code FROM users WHERE email = $1 OR employee_code = $2",
+      [email, employee_code.trim()]
+    );
+
+    if (existing.rows.length > 0) {
+      if (existing.rows[0].email === email) {
+        return res.status(400).json({ message: "อีเมลนี้ได้ทำการลงทะเบียนในระบบแล้ว กรุณาเข้าสู่ระบบ" });
+      }
+      return res.status(400).json({ message: `รหัสบุคลากร (${employee_code}) มีผู้ใช้งานในระบบแล้ว` });
+    }
+
+    const isOwnerAdmin = email === "phongsakorn.ka@ksu.ac.th" || email.startsWith("admin");
+    const assignedRole = isOwnerAdmin ? "admin" : (role && ["lecturer", "head", "staff"].includes(role) ? role : "lecturer");
+    const deptId = department_id ? parseInt(department_id, 10) : null;
+
+    const insertResult = await pool.query(
+      `INSERT INTO users (employee_code, full_name, email, google_id, department_id, position, role, phone, profile_image)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [
+        employee_code.trim(),
+        full_name.trim(),
+        email,
+        googleData.googleId || null,
+        deptId,
+        position ? position.trim() : "อาจารย์ประจำสาขา",
+        assignedRole,
+        phone ? phone.trim() : null,
+        googleData.picture || null,
+      ]
+    );
+
+    const user = insertResult.rows[0];
+
+    // สร้างสิทธิ์วันลาเริ่มต้นให้บุคลากรใหม่ (Auto-seed leave balances)
+    const currentYear = new Date().getFullYear();
+    await pool.query(
+      `INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days)
+       SELECT $1, id, $2, max_days_per_year, 0
+       FROM leave_types
+       ON CONFLICT (user_id, leave_type_id, year) DO NOTHING`,
+      [user.id, currentYear]
+    );
+
+    if (user.department_id) {
+      const deptRes = await pool.query("SELECT name FROM departments WHERE id = $1", [user.department_id]);
+      user.department_name = deptRes.rows[0]?.name;
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, department_id: user.department_id },
+      process.env.JWT_SECRET || "faculty_super_secret_jwt_key_2026",
+      { expiresIn: "8h" }
+    );
+
+    delete user.password_hash;
+
+    res.status(201).json({ token, user, message: "ลงทะเบียนสมาชิกสำเร็จ ยินดีต้อนรับสู่ระบบ" });
+  } catch (err) {
+    console.error("registerWithGoogle error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการสมัครสมาชิก: " + err.message });
+  }
+}
+
+module.exports = {
+  login,
+  me,
+  updateProfile,
+  updateAvatar,
+  changePassword,
+  logout,
+  loginWithGoogle,
+  registerWithGoogle,
+};
