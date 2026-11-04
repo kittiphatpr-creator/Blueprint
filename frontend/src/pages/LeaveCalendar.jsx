@@ -14,6 +14,9 @@ import {
   Flag,
   Sparkles,
   Info,
+  Users,
+  Search,
+  Eye,
 } from "lucide-react";
 
 export default function LeaveCalendar() {
@@ -23,6 +26,7 @@ export default function LeaveCalendar() {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null); // Leave or Holiday detail
+  const [searchQuery, setSearchQuery] = useState("");
 
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
@@ -94,6 +98,17 @@ export default function LeaveCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     if (isThaiHoliday(getDateStr(d))) holidaysInMonthCount++;
   }
+
+  const filteredLeaves = leaves.filter((l) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      l.full_name?.toLowerCase().includes(q) ||
+      l.department_name?.toLowerCase().includes(q) ||
+      l.leave_type_name?.toLowerCase().includes(q) ||
+      l.reason?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -309,6 +324,197 @@ export default function LeaveCalendar() {
             <span>ลาพักร้อน</span>
           </div>
         </div>
+      </div>
+
+      {/* สรุปรายการใครลาวันไหนบ้างประจำเดือน (Monthly Leave List) */}
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {/* Header */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 sm:p-2.5 bg-red-800 text-white rounded-xl sm:rounded-2xl shadow-xs">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <span>สรุปรายชื่อผู้ลางานประจำเดือน</span>
+                <span className="text-[11px] sm:text-xs bg-red-50 text-red-800 font-bold px-2 py-0.5 rounded-full border border-red-200">
+                  {thaiMonthNames[month - 1]} พ.ศ. {year + 543}
+                </span>
+              </h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                รายการบุคลากรที่ลาในเดือนนี้ทั้งหมด {leaves.length} รายการ (เรียงตามวันที่ลา)
+              </p>
+            </div>
+          </div>
+
+          {/* Search Box */}
+          {leaves.length > 0 && (
+            <div className="relative w-full md:w-72">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อ, ภาควิชา, ประเภทการลา..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* List Content */}
+        {loading ? (
+          <div className="py-12 flex justify-center items-center">
+            <div className="w-8 h-8 border-3 border-red-800 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : filteredLeaves.length === 0 ? (
+          <div className="py-12 px-4 text-center">
+            <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Users className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-bold text-slate-700">
+              {searchQuery ? "ไม่พบข้อมูลที่ตรงกับคำค้นหา" : "ไม่มีบุคลากรลางานในเดือนนี้"}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              {searchQuery ? "ลองเปลี่ยนคำค้นหาใหม่อีกครั้ง" : "หากมีบุคลากรได้รับอนุมัติการลา รายชื่อและวันที่ลาจะแสดงที่นี่โดยอัตโนมัติ"}
+            </p>
+          </div>
+        ) : (
+          <div>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-100 uppercase text-[10px] tracking-wider">
+                    <th className="py-3 px-4">วันที่ลา</th>
+                    <th className="py-3 px-4">บุคลากร</th>
+                    <th className="py-3 px-4">ภาควิชา / สังกัด</th>
+                    <th className="py-3 px-4">ประเภทการลา</th>
+                    <th className="py-3 px-4">เหตุผล</th>
+                    <th className="py-3 px-4 text-center">ดูข้อมูล</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredLeaves.map((l, idx) => {
+                    const isSingleDay = l.start_date.split("T")[0] === l.end_date.split("T")[0];
+                    return (
+                      <tr
+                        key={`summary-${l.id}-${idx}`}
+                        className="hover:bg-slate-50/70 transition cursor-pointer"
+                        onClick={() => setSelectedItem({ isHoliday: false, leave: l })}
+                      >
+                        <td className="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-800 shrink-0"></span>
+                            <span>
+                              {isSingleDay
+                                ? formatThaiDate(l.start_date)
+                                : `${formatThaiDate(l.start_date)} - ${formatThaiDate(l.end_date)}`}
+                            </span>
+                            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md font-semibold">
+                              {l.days_count} วัน
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-red-800 to-slate-900 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                              {l.full_name?.charAt(0)}
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-800 block">{l.full_name}</span>
+                              <span className="text-[10px] text-slate-400 block">{l.position || "อาจารย์/เจ้าหน้าที่"}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 font-medium">
+                          {l.department_name || "สำนักงานคณะวิศวกรรมศาสตร์"}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-bold ${getLeaveColor(
+                              l.leave_type_name
+                            )}`}
+                          >
+                            {l.leave_type_name}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
+                          {l.reason || "-"}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedItem({ isHoliday: false, leave: l });
+                            }}
+                            className="inline-flex items-center gap-1 text-[11px] text-red-800 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg font-bold transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>ดู</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredLeaves.map((l, idx) => {
+                const isSingleDay = l.start_date.split("T")[0] === l.end_date.split("T")[0];
+                return (
+                  <div
+                    key={`mobile-summary-${l.id}-${idx}`}
+                    className="p-3.5 space-y-2 hover:bg-slate-50 transition cursor-pointer"
+                    onClick={() => setSelectedItem({ isHoliday: false, leave: l })}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-bold ${getLeaveColor(
+                          l.leave_type_name
+                        )}`}
+                      >
+                        {l.leave_type_name}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">
+                        {l.days_count} วัน
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-800 to-slate-900 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                        {l.full_name?.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 truncate">{l.full_name}</h4>
+                        <p className="text-[10px] text-slate-500 truncate">{l.department_name || "สำนักงานคณะ"}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center gap-1.5">
+                      <CalendarIcon className="w-3.5 h-3.5 text-red-800 shrink-0" />
+                      <span className="font-semibold">
+                        {isSingleDay
+                          ? formatThaiDate(l.start_date)
+                          : `${formatThaiDate(l.start_date)} - ${formatThaiDate(l.end_date)}`}
+                      </span>
+                    </div>
+
+                    {l.reason && (
+                      <p className="text-[10px] text-slate-500 italic truncate">
+                        เหตุผล: {l.reason}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal: Event or Holiday Detail */}
