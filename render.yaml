@@ -13,6 +13,6 @@ services:
       - key: PORT
         value: 10000
       - key: GOOGLE_CLIENT_ID
-        value: 231790850035-0f63f0dpqkeng3mh9783bg8ksposp3hg.apps.googleusercontent.com
+        value: 260624720228-3t6vmlo77nts8qlde1teqvakldkclf0a.apps.googleusercontent.com
       - key: VITE_GOOGLE_CLIENT_ID
-        value: 231790850035-0f63f0dpqkeng3mh9783bg8ksposp3hg.apps.googleusercontent.com
+        value: 260624720228-3t6vmlo77nts8qlde1teqvakldkclf0a.apps.googleusercontent.com
