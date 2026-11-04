@@ -125,14 +125,21 @@ async function approve(req, res) {
     const leave = result.rows[0];
     const leaveYear = new Date(leave.start_date).getFullYear();
 
-    // หักวันลาใน leave_balances (Upsert เพื่อความปลอดภัย)
+    // หักวันลาใน leave_balances (Upsert และซิงค์ยอดจากคำขอลาที่อนุมัติ)
     await pool.query(
       `INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days)
        SELECT $1, $2, $3, lt.max_days_per_year, $4
-       FROM leave_types lt WHERE lt.id = $2
+       FROM leave_types lt WHERE lt.id = $5
        ON CONFLICT (user_id, leave_type_id, year)
-       DO UPDATE SET used_days = leave_balances.used_days + EXCLUDED.used_days`,
-      [leave.user_id, leave.leave_type_id, leaveYear, Number(leave.days_count)]
+       DO UPDATE SET used_days = (
+         SELECT COALESCE(SUM(lr.days_count), 0)
+         FROM leave_requests lr
+         WHERE lr.user_id = $1
+           AND lr.leave_type_id = $2
+           AND lr.status = 'approved'
+           AND EXTRACT(YEAR FROM lr.start_date) = $3
+       )`,
+      [leave.user_id, leave.leave_type_id, leaveYear, Number(leave.days_count), leave.leave_type_id]
     );
 
     // ดึงชื่อผู้อนุมัติ
@@ -201,12 +208,26 @@ async function getBalance(req, res) {
       [userId, year]
     );
 
-    // 2. ดึงข้อมูลยอดวันลาพร้อมชื่อประเภท
+    // 2. ดึงข้อมูลยอดวันลาพร้อมชื่อประเภท (คำนวณวันลาที่ใช้จริงจากคำขอที่อนุมัติแบบเรียลไทม์)
     const result = await pool.query(
       `SELECT lb.id, lb.user_id, lb.leave_type_id, lb.year, 
               lb.total_days::float AS total_days, 
-              lb.used_days::float AS used_days, 
-              (lb.total_days - lb.used_days)::float AS remaining_days,
+              COALESCE((
+                SELECT SUM(lr.days_count) 
+                FROM leave_requests lr 
+                WHERE lr.user_id = lb.user_id 
+                  AND lr.leave_type_id = lb.leave_type_id 
+                  AND lr.status = 'approved'
+                  AND EXTRACT(YEAR FROM lr.start_date) = lb.year
+              ), 0)::float AS used_days,
+              (lb.total_days - COALESCE((
+                SELECT SUM(lr.days_count) 
+                FROM leave_requests lr 
+                WHERE lr.user_id = lb.user_id 
+                  AND lr.leave_type_id = lb.leave_type_id 
+                  AND lr.status = 'approved'
+                  AND EXTRACT(YEAR FROM lr.start_date) = lb.year
+              ), 0))::float AS remaining_days,
               lt.name AS leave_type_name, lt.max_days_per_year
        FROM leave_balances lb
        JOIN leave_types lt ON lt.id = lb.leave_type_id

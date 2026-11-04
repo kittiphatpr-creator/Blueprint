@@ -21,14 +21,14 @@ async function getSummary(req, res) {
 
     // 1. จำนวนบุคลากร
     const totalEmployeesRes = await pool.query(
-      `SELECT COUNT(*) FROM users u ${scopeCondition}`,
+      `SELECT COUNT(*) AS count FROM users u ${scopeCondition}`,
       scopeValue
     );
-    const totalEmployees = parseInt(totalEmployeesRes.rows[0].count, 10);
+    const totalEmployees = parseInt(totalEmployeesRes.rows[0]?.count || 0, 10);
 
     // 2. จำนวนสาขาวิชา
-    const totalDeptsRes = await pool.query(`SELECT COUNT(*) FROM departments`);
-    const totalDepartments = parseInt(totalDeptsRes.rows[0].count, 10);
+    const totalDeptsRes = await pool.query(`SELECT COUNT(*) AS count FROM departments`);
+    const totalDepartments = parseInt(totalDeptsRes.rows[0]?.count || 0, 10);
 
     // 3. สถิติคำขอลา
     const leaveStatsRes = await pool.query(
@@ -83,8 +83,23 @@ async function getSummary(req, res) {
     );
 
     const myBalancesRes = await pool.query(
-      `SELECT lb.leave_type_id, lb.total_days::float AS total_days, lb.used_days::float AS used_days, 
-              (lb.total_days - lb.used_days)::float AS remaining_days,
+      `SELECT lb.leave_type_id, lb.total_days::float AS total_days, 
+              COALESCE((
+                SELECT SUM(lr.days_count) 
+                FROM leave_requests lr 
+                WHERE lr.user_id = lb.user_id 
+                  AND lr.leave_type_id = lb.leave_type_id 
+                  AND lr.status = 'approved'
+                  AND EXTRACT(YEAR FROM lr.start_date) = lb.year
+              ), 0)::float AS used_days,
+              (lb.total_days - COALESCE((
+                SELECT SUM(lr.days_count) 
+                FROM leave_requests lr 
+                WHERE lr.user_id = lb.user_id 
+                  AND lr.leave_type_id = lb.leave_type_id 
+                  AND lr.status = 'approved'
+                  AND EXTRACT(YEAR FROM lr.start_date) = lb.year
+              ), 0))::float AS remaining_days,
               lt.name AS leave_type_name
        FROM leave_balances lb
        JOIN leave_types lt ON lt.id = lb.leave_type_id

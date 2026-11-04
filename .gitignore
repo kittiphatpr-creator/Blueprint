@@ -6,3 +6,5 @@ node_modules/
 cloudflared.exe
 .vscode/
 .idea/
+*.db-shm
+*.db-wal

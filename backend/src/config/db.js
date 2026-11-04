@@ -234,7 +234,7 @@ function initSqlite() {
 }
 
 // แปลงคำสั่ง SQL ของ PostgreSQL ให้เป็นคำสั่งที่ SQLite เข้าใจได้
-function transformPgToSqlite(sql) {
+function transformPgToSqlite(sql, originalParams = []) {
   let s = sql;
 
   // ILIKE -> LIKE
@@ -262,10 +262,18 @@ function transformPgToSqlite(sql) {
     s = s.replace(/ON\s+CONFLICT\s*(\([^)]+\))?\s*DO\s+NOTHING/gi, "");
   }
 
-  // $1, $2, ... -> ?
-  s = s.replace(/\$\d+/g, "?");
+  // Remap $1, $2, ... to ? and reorder params array accurately
+  const paramIndices = [];
+  s = s.replace(/\$(\d+)/g, (_, num) => {
+    paramIndices.push(parseInt(num, 10) - 1);
+    return "?";
+  });
 
-  return s;
+  const transformedParams = paramIndices.length > 0 
+    ? paramIndices.map((idx) => originalParams[idx]) 
+    : originalParams;
+
+  return { sql: s, params: transformedParams };
 }
 
 // Unified Database Client
@@ -290,7 +298,7 @@ const dbClient = {
     if (useSqlite) {
       if (!sqliteDb) initSqlite();
 
-      const transformedSql = transformPgToSqlite(sqlText);
+      const { sql: transformedSql, params: transformedParams } = transformPgToSqlite(sqlText, params);
       const trimmed = transformedSql.trim();
       const isSelect = trimmed.toUpperCase().startsWith("SELECT");
       const hasReturning = trimmed.toUpperCase().includes("RETURNING");
@@ -299,14 +307,14 @@ const dbClient = {
         const stmt = sqliteDb.prepare(transformedSql);
 
         if (isSelect || hasReturning) {
-          const rows = stmt.all(...params);
+          const rows = stmt.all(...transformedParams);
           return { rows: rows || [], rowCount: rows ? rows.length : 0 };
         } else {
-          const result = stmt.run(...params);
+          const result = stmt.run(...transformedParams);
           return { rows: [], rowCount: result.changes };
         }
       } catch (sqliteErr) {
-        console.error("SQLite Query Error:", sqliteErr.message, "SQL:", transformedSql, "Params:", params);
+        console.error("SQLite Query Error:", sqliteErr.message, "SQL:", transformedSql, "Params:", transformedParams);
         throw sqliteErr;
       }
     }
@@ -434,6 +442,21 @@ async function initPostgres() {
     initSqlite();
   }
   await ensureAdminUser();
+  try {
+    await dbClient.query(`
+      UPDATE leave_balances
+      SET used_days = COALESCE((
+        SELECT SUM(lr.days_count)
+        FROM leave_requests lr
+        WHERE lr.user_id = leave_balances.user_id
+          AND lr.leave_type_id = leave_balances.leave_type_id
+          AND lr.status = 'approved'
+          AND EXTRACT(YEAR FROM lr.start_date) = leave_balances.year
+      ), 0)
+    `);
+  } catch (e) {
+    console.log("Sync leave balances note:", e.message);
+  }
 })();
 
 module.exports = dbClient;
