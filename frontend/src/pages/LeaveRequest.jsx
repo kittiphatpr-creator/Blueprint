@@ -201,32 +201,6 @@ export default function LeaveRequest() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">ยื่นคำขอลางานออนไลน์</h1>
-      {/* Official Form Download Banner */}
-      <div className="mt-3 bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 text-slate-700">
-          <FileText className="w-5 h-5 text-red-600 shrink-0" />
-          <div>
-            <p className="font-bold text-slate-800">แบบฟอร์มใบลาทางการ มหาวิทยาลัยกาฬสินธุ์ (Official Word Forms)</p>
-            <p className="text-slate-500 text-[11px]">ดาวน์โหลดแบบฟอร์มต้นฉบับของคณะวิศวกรรมศาสตร์ฯ หรือกรอกข้อมูลออนไลน์เพื่อพิมพ์อัตโนมัติได้ทันที</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <a
-            href="/templates/แบบใบลาพักผ่อน.doc"
-            download
-            className="flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 hover:border-red-400 hover:text-red-700 text-slate-700 font-semibold rounded-xl shadow-xs transition text-xs"
-          >
-            <span>📥 แบบใบลาพักผ่อน (.doc)</span>
-          </a>
-          <a
-            href="/templates/แบบใบลาป่วย-ลาคลอดบุตร-ลากิจส่วนตัว.doc"
-            download
-            className="flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 hover:border-red-400 hover:text-red-700 text-slate-700 font-semibold rounded-xl shadow-xs transition text-xs"
-          >
-            <span>📥 แบบใบลาป่วย-ลากิจ (.doc)</span>
-          </a>
-        </div>
-      </div>
         <p className="text-sm text-slate-600 mt-1">
           กรอกแบบฟอร์มเพื่อส่งคำขอลาไปยังหัวหน้าสาขาวิชาหรือผู้มีอำนาจอนุมัติ (ระบบ Paperless)
         </p>
