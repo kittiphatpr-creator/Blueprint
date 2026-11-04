@@ -29,7 +29,7 @@ const defaultDepts = [
 ];
 
 export default function Login() {
-  const { login, loginWithGoogle, registerWithGoogle, quickLogin, isAuthenticated } = useAuth();
+  const { login, loginWithGoogle, registerWithGoogle, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -476,92 +476,6 @@ export default function Login() {
                       width="340"
                       hosted_domain="ksu.ac.th"
                     />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setError("");
-                      const demoEmail = "kittiphat.pr@ksu.ac.th";
-                      const demoGoogleUser = {
-                        email: demoEmail,
-                        name: "อาจารย์กิตติพัฒน์ ประเสริฐ",
-                        picture: "https://lh3.googleusercontent.com/a/default-user=s96-c",
-                        googleId: "google-demo-" + Date.now(),
-                      };
-                      setGoogleProfile(demoGoogleUser);
-                      setRegForm({
-                        employee_code: "671540005008",
-                        full_name: demoGoogleUser.name,
-                        department_id: "1",
-                        position: "อาจารย์",
-                        role: "lecturer",
-                        phone: "081-234-5678",
-                      });
-                      setRegisterMode(true);
-                    }}
-                    className="text-[11px] text-slate-500 hover:text-red-800 underline transition flex items-center gap-1 mt-0.5"
-                  >
-                    <span>👉 หรือ คลิกตรงนี้เพื่อทดลองเปิดหน้าฟอร์มสมัครสมาชิก (บันทึกเข้าฐานข้อมูลจริง)</span>
-                  </button>
-                </div>
-
-                {/* Quick 1-Click Login for Instant Testing */}
-                <div className="pt-3 border-t border-slate-100 mt-4">
-                  <p className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider mb-2.5">
-                    หรือ ทดลองเข้าสู่ระบบด่วน (คลิกเดียวเข้าได้ทันที)
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setLoading(true);
-                        try {
-                          await quickLogin("lecturer");
-                          navigate("/leave-request");
-                        } catch (err) {
-                          setError("เข้าสู่ระบบไม่สำเร็จ: " + (err.response?.data?.message || err.message));
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="p-2.5 text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl border border-blue-200 transition shadow-sm text-center flex items-center justify-center gap-1.5"
-                    >
-                      <span>👨‍🏫 อาจารย์ (ผศ.ดร.สมชาย)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setLoading(true);
-                        try {
-                          await quickLogin("head");
-                          navigate("/leave-approval");
-                        } catch (err) {
-                          setError("เข้าสู่ระบบไม่สำเร็จ: " + (err.response?.data?.message || err.message));
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="p-2.5 text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl border border-purple-200 transition shadow-sm text-center flex items-center justify-center gap-1.5"
-                    >
-                      <span>👔 หัวหน้าภาค (รออนุมัติ)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setLoading(true);
-                        try {
-                          await quickLogin("admin");
-                          navigate("/dashboard");
-                        } catch (err) {
-                          setError("เข้าสู่ระบบไม่สำเร็จ: " + (err.response?.data?.message || err.message));
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="p-2.5 text-xs font-bold bg-red-50 hover:bg-red-100 text-red-800 rounded-xl border border-red-200 transition shadow-sm text-center col-span-2 flex items-center justify-center gap-1.5"
-                    >
-                      <span>🛡️ ผู้ดูแลระบบ คณะวิศวะ (Admin)</span>
-                    </button>
                   </div>
                 </div>
               </form>
