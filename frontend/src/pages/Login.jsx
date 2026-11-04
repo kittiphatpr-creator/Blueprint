@@ -463,18 +463,46 @@ export default function Login() {
                 </div>
 
                 {/* Google Sign-In Button */}
-                <div className="flex justify-center">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => setError("ไม่มีสิทธิ์เข้าสู่ระบบหรือไม่สามารถยืนยันตัวตนด้วย Google ได้")}
-                    text="continue_with"
-                    shape="rectangular"
-                    theme="outline"
-                    size="large"
-                    locale="th"
-                    width="340"
-                    hosted_domain="ksu.ac.th"
-                  />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex justify-center w-full">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => setError("ไม่มีสิทธิ์เข้าสู่ระบบหรือไม่สามารถยืนยันตัวตนด้วย Google ได้")}
+                      text="continue_with"
+                      shape="rectangular"
+                      theme="outline"
+                      size="large"
+                      locale="th"
+                      width="340"
+                      hosted_domain="ksu.ac.th"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError("");
+                      const demoEmail = "kittiphat.pr@ksu.ac.th";
+                      const demoGoogleUser = {
+                        email: demoEmail,
+                        name: "อาจารย์กิตติพัฒน์ ประเสริฐ",
+                        picture: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+                        googleId: "google-demo-" + Date.now(),
+                      };
+                      setGoogleProfile(demoGoogleUser);
+                      setRegForm({
+                        employee_code: "671540005008",
+                        full_name: demoGoogleUser.name,
+                        department_id: "1",
+                        position: "อาจารย์",
+                        role: "lecturer",
+                        phone: "081-234-5678",
+                      });
+                      setRegisterMode(true);
+                    }}
+                    className="text-[11px] text-slate-500 hover:text-red-800 underline transition flex items-center gap-1 mt-0.5"
+                  >
+                    <span>👉 หรือ คลิกตรงนี้เพื่อทดลองเปิดหน้าฟอร์มสมัครสมาชิก (บันทึกเข้าฐานข้อมูลจริง)</span>
+                  </button>
                 </div>
 
                 {/* Quick 1-Click Login for Instant Testing */}
