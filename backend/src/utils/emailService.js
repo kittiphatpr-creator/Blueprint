@@ -11,15 +11,30 @@ function getTransporter() {
     return null;
   }
 
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || "465", 10);
+
+  // ถ้าเป็น Gmail สามารถใช้ service: 'gmail' ได้โดยตรง (ตัดช่องว่างใน App Password อัตโนมัติ)
+  if (!host || host.includes("gmail.com") || user.endsWith("@gmail.com")) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: user.trim(),
+        pass: pass.replace(/\s+/g, ""),
+      },
+    });
+  }
+
   const secure = process.env.SMTP_SECURE === "false" || port === 587 ? false : true;
 
   return nodemailer.createTransport({
     host,
     port,
     secure,
-    auth: { user, pass },
+    auth: {
+      user: user.trim(),
+      pass: pass.trim(),
+    },
     tls: {
       rejectUnauthorized: false,
     },
@@ -111,15 +126,10 @@ async function sendOtpEmail({ to, otp, userName }) {
   const transporter = getTransporter();
 
   if (!transporter) {
-    console.log(`\n======================================================`);
-    console.log(`[OTP Email Service] ℹ️ SMTP ยังไม่ได้ตั้งค่าใน Environment Variables`);
-    console.log(`[OTP Email Service] 🔑 ส่งรหัส OTP ไปที่: ${to}`);
-    console.log(`[OTP Email Service] 🎯 รหัส OTP: ${otp}`);
-    console.log(`======================================================\n`);
+    console.error(`[OTP Email Service] ❌ ยังไม่ได้ตั้งค่า SMTP_USER และ SMTP_PASS ใน Environment Variables`);
     return {
       sent: false,
       reason: "SMTP_NOT_CONFIGURED",
-      otp,
     };
   }
 
@@ -141,7 +151,6 @@ async function sendOtpEmail({ to, otp, userName }) {
     return {
       sent: false,
       reason: error.message,
-      otp,
     };
   }
 }

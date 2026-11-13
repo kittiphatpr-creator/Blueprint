@@ -66,7 +66,6 @@ export default function Login() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState("");
-  const [debugOtpHint, setDebugOtpHint] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
@@ -195,7 +194,6 @@ export default function Login() {
     if (e) e.preventDefault();
     setForgotError("");
     setForgotSuccess("");
-    setDebugOtpHint("");
 
     const cleanEmail = forgotEmail.trim().toLowerCase();
     if (!cleanEmail) {
@@ -207,9 +205,6 @@ export default function Login() {
     try {
       const res = await authService.sendResetOtp(cleanEmail);
       setForgotSuccess(res.message || "ส่งรหัส OTP เรียบร้อยแล้ว");
-      if (res.debugOtp) {
-        setDebugOtpHint(res.debugOtp);
-      }
       setForgotStep(2);
       setResendCooldown(60);
     } catch (err) {
@@ -288,7 +283,6 @@ export default function Login() {
     setConfirmPassword("");
     setForgotError("");
     setForgotSuccess("");
-    setDebugOtpHint("");
   };
 
   return (
@@ -453,24 +447,7 @@ export default function Login() {
                       </p>
                     </div>
 
-                    {/* กล่องตัวช่วย OTP หาก SMTP ยังไม่เปิดใช้งาน */}
-                    {debugOtpHint && (
-                      <div className="p-3 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-900 flex items-center justify-between gap-2 shadow-xs">
-                        <div className="space-y-0.5">
-                          <p className="font-bold">💡 รหัส OTP สำหรับทดสอบ:</p>
-                          <p className="font-mono text-base font-black tracking-widest text-red-800">
-                            {debugOtpHint}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setForgotOtp(debugOtpHint)}
-                          className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold rounded-xl text-xs transition cursor-pointer"
-                        >
-                          ใส่รหัสนี้ทันที
-                        </button>
-                      </div>
-                    )}
+                    
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 text-center">

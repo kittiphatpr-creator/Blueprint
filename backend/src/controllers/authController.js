@@ -408,19 +408,22 @@ async function sendResetOtp(req, res) {
       userName: user.full_name,
     });
 
-    const responsePayload = {
-      success: true,
-      email: user.email,
-      message: `ส่งรหัสยืนยัน OTP ไปยัง ${user.email} เรียบร้อยแล้ว (รหัสมีอายุ 10 นาที)`,
-    };
-
-    // หากเซิร์ฟเวอร์ยังไม่ได้ตั้งค่า SMTP ใน Environment
     if (!mailResult.sent) {
-      responsePayload.debugOtp = otp;
-      responsePayload.hint = "บันทึกรหัส OTP สำหรับทดสอบแล้ว";
+      if (mailResult.reason === "SMTP_NOT_CONFIGURED") {
+        return res.status(503).json({
+          message: "เซิร์ฟเวอร์ยังไม่ได้ตั้งค่าผู้ส่งอีเมล (SMTP) บน Render กรุณาตั้งค่า SMTP_USER และ SMTP_PASS ใน Environment Variables",
+        });
+      }
+      return res.status(500).json({
+        message: `ไม่สามารถส่งอีเมลรหัส OTP ไปยัง ${user.email} ได้: ${mailResult.reason}`,
+      });
     }
 
-    res.json(responsePayload);
+    res.json({
+      success: true,
+      email: user.email,
+      message: `ส่งรหัสยืนยัน OTP ไปยังกล่องข้อความอีเมล ${user.email} เรียบร้อยแล้ว (รหัสมีอายุ 10 นาที)`,
+    });
   } catch (err) {
     console.error("sendResetOtp error:", err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดในการส่งรหัส OTP: " + err.message });
