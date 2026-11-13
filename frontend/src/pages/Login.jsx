@@ -67,6 +67,13 @@ export default function Login() {
   const [forgotError, setForgotError] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+    const inApp = /FBAN|FBAV|FB_IAB|Messenger|Line|Instagram|Twitter/i.test(ua);
+    setIsInAppBrowser(inApp);
+  }, []);
 
   useEffect(() => {
     authService
@@ -797,6 +804,27 @@ export default function Login() {
               /* VIEW 3: STANDARD LOGIN FORM */
               /* ========================================================= */
               <form onSubmit={handleSubmit} className="space-y-4">
+                {isInAppBrowser && (
+                  <div className="mb-4 p-3.5 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-900 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">⚠️ คุณกำลังเปิดผ่านแอพแชท (Messenger / LINE)</p>
+                        <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                          ความปลอดภัยของ Google ไม่อนุญาตให้ล็อกอิน Google ในหน้าต่างแชท (จะขึ้นหน้าขาว) กรุณากดปุ่ม <strong>จุด 3 จุด (...)</strong> มุมขวาบน แล้วเลือก <strong>"เปิดใน Chrome"</strong>
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href={`intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`}
+                      className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-center block text-xs shadow-xs transition"
+                    >
+                      🚀 แตะตรงนี้เพื่อเปิดใน Google Chrome
+                    </a>
+                  </div>
+                )}
+
+                
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     อีเมลมหาวิทยาลัยกาฬสินธุ์ (@ksu.ac.th)
