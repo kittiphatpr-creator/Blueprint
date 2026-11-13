@@ -2,14 +2,15 @@ const nodemailer = require("nodemailer");
 
 /**
  * สร้าง SMTP Transporter สำหรับส่งอีเมลทางการของคณะวิศวกรรมศาสตร์ ม.กาฬสินธุ์
+ * ใช้ Port 587 (STARTTLS) เพื่อรองรับ Cloud Containers (Render/AWS) 100%
  */
 function getTransporter() {
   const user = process.env.SMTP_USER || "kittiphat.pr@ksu.ac.th";
   const pass = process.env.SMTP_PASS || "nzuh naji xbds dhia";
 
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = parseInt(process.env.SMTP_PORT || "465", 10);
-  const secure = process.env.SMTP_SECURE === "false" || port === 587 ? false : true;
+  const port = parseInt(process.env.SMTP_PORT || "587", 10);
+  const secure = port === 465;
 
   return nodemailer.createTransport({
     host,
@@ -22,6 +23,9 @@ function getTransporter() {
     tls: {
       rejectUnauthorized: false,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 }
 
