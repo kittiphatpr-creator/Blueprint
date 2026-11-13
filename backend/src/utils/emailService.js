@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 
 const SMTP_USER = process.env.EMAIL_USER || "kittiphat.pr@ksu.ac.th";
 const SMTP_PASS = process.env.EMAIL_PASS || "nzuh naji xbds dhia";
-const WEBHOOK_URL = process.env.EMAIL_WEBHOOK_URL; // Google Apps Script / HTTPS Relay (Bypasses Render SMTP port block)
+const WEBHOOK_URL = process.env.EMAIL_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzXmFRXTMEqKQ4iSDY0azyzcZcmFEsUmg1lDjIgpvovVzf71mtFRF6N_Y03rG2Boqww/exec";
 const APP_URL = process.env.APP_URL || "https://engineering-faculty-app-qhvi.onrender.com";
 
 /**
