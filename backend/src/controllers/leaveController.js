@@ -1,4 +1,9 @@
 const pool = require("../config/db");
+const {
+  sendNewLeaveNotification,
+  sendLeaveApprovedNotification,
+  sendLeaveRejectedNotification,
+} = require("../utils/emailService");
 
 async function getMyRequests(req, res) {
   try {
@@ -87,12 +92,12 @@ async function create(req, res) {
 
     const leaveRequest = result.rows[0];
 
-    // ดึงชื่อผู้ยื่นลา
+    // ดึงชื่อผู้ยื่นลา และสังกัด
     const userRes = await pool.query("SELECT full_name, department_id FROM users WHERE id = $1", [req.user.id]);
     const senderName = userRes.rows[0]?.full_name || "บุคลากร";
     const userDept = userRes.rows[0]?.department_id;
 
-    // แจ้งเตือนหัวหน้าสาขา และ Admin
+    // 1. แจ้งเตือนในระบบ (In-App Notification) ให้หัวหน้าสาขา และ Admin
     await pool.query(
       `INSERT INTO notifications (user_id, type, message, related_id)
        SELECT id, 'leave_request', $1, $2
@@ -100,6 +105,36 @@ async function create(req, res) {
        WHERE (role = 'head' AND department_id = $3) OR role = 'admin'`,
       [`มีคำขอลาใหม่จาก ${senderName} รอการพิจารณาอนุมัติ`, leaveRequest.id, userDept]
     );
+
+    // 2. ส่งอีเมลแจ้งเตือน (Email Notification) หาหัวหน้าสาขา และ Admin (เบื้องหลัง ไม่บล็อกหน้าเว็บ)
+    (async () => {
+      try {
+        const ltRes = await pool.query("SELECT name FROM leave_types WHERE id = $1", [leave_type_id]);
+        const leaveTypeName = ltRes.rows[0]?.name || "การลา";
+
+        const approversRes = await pool.query(
+          `SELECT email FROM users 
+           WHERE ((role = 'head' AND department_id = $1) OR role = 'admin') 
+             AND email IS NOT NULL`,
+          [userDept]
+        );
+        const approverEmails = approversRes.rows.map(r => r.email).filter(Boolean);
+
+        if (approverEmails.length > 0) {
+          await sendNewLeaveNotification({
+            to: approverEmails,
+            applicantName: senderName,
+            leaveType: leaveTypeName,
+            startDate: start_date,
+            endDate: end_date,
+            daysCount: days_count,
+            reason: reason || "-"
+          });
+        }
+      } catch (emailErr) {
+        console.error("[Email Notification Error - Create Leave]:", emailErr.message);
+      }
+    })();
 
     res.status(201).json(leaveRequest);
   } catch (err) {
@@ -146,11 +181,40 @@ async function approve(req, res) {
     const approverRes = await pool.query("SELECT full_name FROM users WHERE id = $1", [req.user.id]);
     const approverName = approverRes.rows[0]?.full_name || "ผู้มีอำนาจอนุมัติ";
 
+    // 1. แจ้งเตือนในระบบ (In-App Notification) แก่ผู้ยื่นขอลา
     await pool.query(
       `INSERT INTO notifications (user_id, type, message, related_id)
        VALUES ($1, 'leave_result', $2, $3)`,
       [leave.user_id, `คำขอลาของคุณได้รับการอนุมัติเรียบร้อยแล้ว โดย ${approverName}`, leave.id]
     );
+
+    // 2. ส่งอีเมลแจ้งผลการอนุมัติ (Email Notification) แก่ผู้ยื่นขอลา (เบื้องหลัง)
+    (async () => {
+      try {
+        const appRes = await pool.query(
+          `SELECT u.email, u.full_name, lt.name AS leave_type_name
+           FROM users u
+           JOIN leave_types lt ON lt.id = $2
+           WHERE u.id = $1`,
+          [leave.user_id, leave.leave_type_id]
+        );
+        const applicant = appRes.rows[0];
+
+        if (applicant?.email) {
+          await sendLeaveApprovedNotification({
+            to: applicant.email,
+            applicantName: applicant.full_name,
+            approverName,
+            leaveType: applicant.leave_type_name,
+            startDate: leave.start_date,
+            endDate: leave.end_date,
+            daysCount: leave.days_count
+          });
+        }
+      } catch (emailErr) {
+        console.error("[Email Notification Error - Approve Leave]:", emailErr.message);
+      }
+    })();
 
     res.json(leave);
   } catch (err) {
@@ -177,6 +241,11 @@ async function reject(req, res) {
 
     const leave = result.rows[0];
 
+    // ดึงชื่อผู้พิจารณา
+    const rejecterRes = await pool.query("SELECT full_name FROM users WHERE id = $1", [req.user.id]);
+    const approverName = rejecterRes.rows[0]?.full_name || "ผู้มีอำนาจพิจารณา";
+
+    // 1. แจ้งเตือนในระบบ (In-App Notification) แก่ผู้ยื่นขอลา
     await pool.query(
       `INSERT INTO notifications (user_id, type, message, related_id)
        VALUES ($1, 'leave_result', $2, $3)`,
@@ -186,6 +255,35 @@ async function reject(req, res) {
         leave.id,
       ]
     );
+
+    // 2. ส่งอีเมลแจ้งผลการไม่อนุมัติ (Email Notification) แก่ผู้ยื่นขอลา (เบื้องหลัง)
+    (async () => {
+      try {
+        const appRes = await pool.query(
+          `SELECT u.email, u.full_name, lt.name AS leave_type_name
+           FROM users u
+           JOIN leave_types lt ON lt.id = $2
+           WHERE u.id = $1`,
+          [leave.user_id, leave.leave_type_id]
+        );
+        const applicant = appRes.rows[0];
+
+        if (applicant?.email) {
+          await sendLeaveRejectedNotification({
+            to: applicant.email,
+            applicantName: applicant.full_name,
+            approverName,
+            leaveType: applicant.leave_type_name,
+            startDate: leave.start_date,
+            endDate: leave.end_date,
+            daysCount: leave.days_count,
+            reason: reason || "ไม่อนุมัติ"
+          });
+        }
+      } catch (emailErr) {
+        console.error("[Email Notification Error - Reject Leave]:", emailErr.message);
+      }
+    })();
 
     res.json(leave);
   } catch (err) {
