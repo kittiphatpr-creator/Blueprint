@@ -1,3 +1,4 @@
+const { sendOtpEmail } = require("../utils/emailService");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
@@ -353,7 +354,210 @@ async function registerWithGoogle(req, res) {
   }
 }
 
+
+// -------------------------------------------------------------
+// ระบบลืมรหัสผ่านด้วยรหัสยืนยัน OTP ทางอีเมล (@ksu.ac.th)
+// -------------------------------------------------------------
+
+async function sendResetOtp(req, res) {
+  let { email } = req.body;
+  if (!email || !String(email).trim()) {
+    return res.status(400).json({ message: "กรุณาระบุอีเมลสำหรับรับรหัส OTP" });
+  }
+
+  email = String(email).trim().toLowerCase();
+  let emailAlt = email;
+  if (email.endsWith("@ksu.ac.th")) {
+    emailAlt = email.replace("@ksu.ac.th", "@eng.ac.th");
+  } else if (email.endsWith("@eng.ac.th")) {
+    emailAlt = email.replace("@eng.ac.th", "@ksu.ac.th");
+  }
+
+  try {
+    const userRes = await pool.query(
+      `SELECT id, email, full_name FROM users 
+       WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) OR LOWER(TRIM(email)) = LOWER(TRIM($2))`,
+      [email, emailAlt]
+    );
+    const user = userRes.rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: "ไม่พบบัญชีผู้ใช้งานที่ใช้อีเมลนี้ในระบบ กรุณาตรวจสอบอีเมลอีกครั้ง" });
+    }
+
+    // สุ่มรหัส OTP 6 หลัก
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+    // ล้างรหัส OTP เก่าของอีเมลนี้
+    await pool.query(
+      "DELETE FROM password_resets WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) OR LOWER(TRIM(email)) = LOWER(TRIM($2))",
+      [email, user.email]
+    );
+
+    // บันทึกรหัส OTP ใหม่
+    await pool.query(
+      "INSERT INTO password_resets (email, otp, expires_at) VALUES ($1, $2, $3)",
+      [user.email, otp, expiresAt]
+    );
+
+    // ส่งอีเมลไปยังที่อยู่อีเมลจริงของบุคลากร
+    const mailResult = await sendOtpEmail({
+      to: user.email,
+      otp,
+      userName: user.full_name,
+    });
+
+    const responsePayload = {
+      success: true,
+      email: user.email,
+      message: `ส่งรหัสยืนยัน OTP ไปยัง ${user.email} เรียบร้อยแล้ว (รหัสมีอายุ 10 นาที)`,
+    };
+
+    // หากเซิร์ฟเวอร์ยังไม่ได้ตั้งค่า SMTP ใน Environment
+    if (!mailResult.sent) {
+      responsePayload.debugOtp = otp;
+      responsePayload.hint = "บันทึกรหัส OTP สำหรับทดสอบแล้ว";
+    }
+
+    res.json(responsePayload);
+  } catch (err) {
+    console.error("sendResetOtp error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการส่งรหัส OTP: " + err.message });
+  }
+}
+
+async function verifyResetOtp(req, res) {
+  let { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ message: "กรุณาระบุอีเมลและรหัส OTP 6 หลัก" });
+  }
+
+  email = String(email).trim().toLowerCase();
+  otp = String(otp).trim();
+
+  let emailAlt = email.endsWith("@ksu.ac.th")
+    ? email.replace("@ksu.ac.th", "@eng.ac.th")
+    : email.replace("@eng.ac.th", "@ksu.ac.th");
+
+  try {
+    const resOtp = await pool.query(
+      `SELECT * FROM password_resets 
+       WHERE (LOWER(TRIM(email)) = LOWER(TRIM($1)) OR LOWER(TRIM(email)) = LOWER(TRIM($2)))
+         AND otp = $3 
+         AND expires_at > NOW()
+       ORDER BY id DESC LIMIT 1`,
+      [email, emailAlt, otp]
+    );
+
+    if (resOtp.rows.length === 0) {
+      return res.status(400).json({ message: "รหัส OTP ไม่ถูกต้อง หรือหมดอายุแล้ว กรุณาลองใหม่อีกครั้ง" });
+    }
+
+    // สร้าง resetToken อายุ 15 นาที สำหรับขั้นถัดไป
+    const resetToken = jwt.sign(
+      { email: resOtp.rows[0].email, purpose: "password_reset" },
+      process.env.JWT_SECRET || "faculty_super_secret_jwt_key_2026",
+      { expiresIn: "15m" }
+    );
+
+    res.json({
+      success: true,
+      message: "ยืนยันรหัส OTP ถูกต้อง",
+      resetToken,
+      email: resOtp.rows[0].email,
+    });
+  } catch (err) {
+    console.error("verifyResetOtp error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการตรวจสอบรหัส OTP: " + err.message });
+  }
+}
+
+async function resetPasswordWithOtp(req, res) {
+  let { email, otp, resetToken, newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร" });
+  }
+
+  let verifiedEmail = null;
+
+  // ตรวจสอบผ่าน resetToken
+  if (resetToken) {
+    try {
+      const decoded = jwt.verify(
+        resetToken,
+        process.env.JWT_SECRET || "faculty_super_secret_jwt_key_2026"
+      );
+      if (decoded.purpose === "password_reset" && decoded.email) {
+        verifiedEmail = decoded.email;
+      }
+    } catch (e) {
+      // Token invalid or expired
+    }
+  }
+
+  // หากไม่มี resetToken ให้ตรวจสอบจาก email + otp ตรงๆ
+  if (!verifiedEmail && email && otp) {
+    email = String(email).trim().toLowerCase();
+    otp = String(otp).trim();
+    let emailAlt = email.endsWith("@ksu.ac.th")
+      ? email.replace("@ksu.ac.th", "@eng.ac.th")
+      : email.replace("@eng.ac.th", "@ksu.ac.th");
+
+    const check = await pool.query(
+      `SELECT * FROM password_resets 
+       WHERE (LOWER(TRIM(email)) = LOWER(TRIM($1)) OR LOWER(TRIM(email)) = LOWER(TRIM($2)))
+         AND otp = $3 
+         AND expires_at > NOW()
+       ORDER BY id DESC LIMIT 1`,
+      [email, emailAlt, otp]
+    );
+
+    if (check.rows.length > 0) {
+      verifiedEmail = check.rows[0].email;
+    }
+  }
+
+  if (!verifiedEmail) {
+    return res.status(400).json({ message: "เซสชันการรีเซ็ตรหัสผ่านหมดอายุหรือไม่ถูกต้อง กรุณาขอรหัส OTP ใหม่อีกครั้ง" });
+  }
+
+  try {
+    const newHash = await bcrypt.hash(newPassword, 10);
+    const updateRes = await pool.query(
+      `UPDATE users 
+       SET password_hash = $1, updated_at = NOW() 
+       WHERE LOWER(TRIM(email)) = LOWER(TRIM($2))
+       RETURNING id, full_name, email`,
+      [newHash, verifiedEmail]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ message: "ไม่พบบัญชีผู้ใช้งานที่ต้องการเปลี่ยนรหัสผ่าน" });
+    }
+
+    // ลบ OTP ที่ใช้งานแล้ว
+    await pool.query(
+      "DELETE FROM password_resets WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))",
+      [verifiedEmail]
+    );
+
+    res.json({
+      success: true,
+      message: "เปลี่ยนรหัสผ่านใหม่สำเร็จแล้ว สามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที",
+      email: verifiedEmail,
+    });
+  } catch (err) {
+    console.error("resetPasswordWithOtp error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน: " + err.message });
+  }
+}
+
 module.exports = {
+  sendResetOtp,
+  verifyResetOtp,
+  resetPasswordWithOtp,
   login,
   me,
   updateProfile,
