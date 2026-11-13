@@ -126,14 +126,6 @@ function initSqlite() {
       related_id INTEGER,
       created_at DATETIME DEFAULT (datetime('now', 'localtime'))
     );
-
-    CREATE TABLE IF NOT EXISTS password_resets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT NOT NULL,
-      otp TEXT NOT NULL,
-      expires_at DATETIME NOT NULL,
-      created_at DATETIME DEFAULT (datetime('now', 'localtime'))
-    );
   `);
 
   // Migration for existing tables: add attachment_url if missing
@@ -425,9 +417,6 @@ async function initPostgres() {
         await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS image_url TEXT;");
         await pgPool.query("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS attachment_url TEXT;");
       } catch (e) {}
-    try {
-      await pgPool.query("CREATE TABLE IF NOT EXISTS password_resets (id SERIAL PRIMARY KEY, email VARCHAR(255) NOT NULL, otp VARCHAR(10) NOT NULL, expires_at TIMESTAMP NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-    } catch (e) {}
 
       console.log("✅ สร้างตารางและข้อมูลเริ่มต้นใน PostgreSQL สำเร็จเรียบร้อย!");
     } else {

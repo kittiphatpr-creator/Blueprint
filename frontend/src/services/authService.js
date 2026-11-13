@@ -47,26 +47,6 @@ export const authService = {
     return response.data;
   },
 
-  async sendResetOtp(email) {
-    const response = await api.post("/auth/forgot-password/send-otp", { email });
-    return response.data;
-  },
-
-  async verifyByEmployeeCode(email, employee_code) {
-    const response = await api.post("/auth/forgot-password/verify-code", { email, employee_code });
-    return response.data;
-  },
-
-  async verifyResetOtp(email, otp) {
-    const response = await api.post("/auth/forgot-password/verify-otp", { email, otp });
-    return response.data;
-  },
-
-  async resetPasswordWithOtp(data) {
-    const response = await api.post("/auth/forgot-password/reset", data);
-    return response.data;
-  },
-
   async logout() {
     try {
       await api.post("/auth/logout");

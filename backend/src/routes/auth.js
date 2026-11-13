@@ -12,10 +12,6 @@ const {
   updateProfile,
   updateAvatar,
   changePassword,
-  sendResetOtp,
-  verifyByEmployeeCode,
-  verifyResetOtp,
-  resetPasswordWithOtp,
 } = require("../controllers/authController");
 const { requireAuth } = require("../middleware/auth");
 
@@ -30,13 +26,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post("/login", login);
-
-// ลืมรหัสผ่านด้วยรหัส OTP ทางอีเมล
-router.post("/forgot-password/send-otp", sendResetOtp);
-router.post("/forgot-password/verify-otp", verifyResetOtp);
-router.post("/forgot-password/verify-code", verifyByEmployeeCode);
-router.post("/forgot-password/reset", resetPasswordWithOtp);
-
 router.post("/google", loginWithGoogle);
 router.post("/register-google", registerWithGoogle);
 router.get("/departments", async (req, res) => {

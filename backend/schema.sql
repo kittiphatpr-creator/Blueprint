@@ -103,13 +103,3 @@ INSERT INTO departments (name) VALUES
   ('วิศวกรรมไฟฟ้า'),
   ('วิศวกรรมโยธา')
 ON CONFLICT DO NOTHING;
-
-
-CREATE TABLE IF NOT EXISTS password_resets (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  otp VARCHAR(10) NOT NULL,
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets(email);
