@@ -1,30 +1,14 @@
 const nodemailer = require("nodemailer");
 
 /**
- * สร้าง SMTP Transporter หากมีการตั้งค่า Environment Variables
+ * สร้าง SMTP Transporter สำหรับส่งอีเมลทางการของคณะวิศวกรรมศาสตร์ ม.กาฬสินธุ์
  */
 function getTransporter() {
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const user = process.env.SMTP_USER || "kittiphat.pr@ksu.ac.th";
+  const pass = process.env.SMTP_PASS || "nzuh naji xbds dhia";
 
-  if (!user || !pass) {
-    return null;
-  }
-
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.SMTP_PORT || "465", 10);
-
-  // ถ้าเป็น Gmail สามารถใช้ service: 'gmail' ได้โดยตรง (ตัดช่องว่างใน App Password อัตโนมัติ)
-  if (!host || host.includes("gmail.com") || user.endsWith("@gmail.com")) {
-    return nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: user.trim(),
-        pass: pass.replace(/\s+/g, ""),
-      },
-    });
-  }
-
   const secure = process.env.SMTP_SECURE === "false" || port === 587 ? false : true;
 
   return nodemailer.createTransport({
@@ -45,8 +29,8 @@ function getTransporter() {
  * ส่งอีเมลรหัสยืนยัน OTP สำหรับตั้งรหัสผ่านใหม่
  */
 async function sendOtpEmail({ to, otp, userName }) {
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const from = process.env.SMTP_FROM || `"คณะวิศวกรรมศาสตร์ ม.กาฬสินธุ์" <${user || "noreply@ksu.ac.th"}>`;
+  const user = process.env.SMTP_USER || "kittiphat.pr@ksu.ac.th";
+  const from = process.env.SMTP_FROM || `"คณะวิศวกรรมศาสตร์ ม.กาฬสินธุ์" <${user}>`;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -124,14 +108,6 @@ async function sendOtpEmail({ to, otp, userName }) {
   `;
 
   const transporter = getTransporter();
-
-  if (!transporter) {
-    console.error(`[OTP Email Service] ❌ ยังไม่ได้ตั้งค่า SMTP_USER และ SMTP_PASS ใน Environment Variables`);
-    return {
-      sent: false,
-      reason: "SMTP_NOT_CONFIGURED",
-    };
-  }
 
   try {
     const info = await transporter.sendMail({
