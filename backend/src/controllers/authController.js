@@ -557,7 +557,53 @@ async function resetPasswordWithOtp(req, res) {
   }
 }
 
+
+async function verifyByEmployeeCode(req, res) {
+  let { email, employee_code } = req.body;
+  if (!email || !employee_code) {
+    return res.status(400).json({ message: "กรุณาระบุอีเมลและรหัสประจำตัวบุคลากร" });
+  }
+
+  email = String(email).trim().toLowerCase();
+  employee_code = String(employee_code).trim();
+
+  let emailAlt = email.endsWith("@ksu.ac.th")
+    ? email.replace("@ksu.ac.th", "@eng.ac.th")
+    : email.replace("@eng.ac.th", "@ksu.ac.th");
+
+  try {
+    const userRes = await pool.query(
+      `SELECT id, email, full_name, employee_code FROM users 
+       WHERE (LOWER(TRIM(email)) = LOWER(TRIM($1)) OR LOWER(TRIM(email)) = LOWER(TRIM($2)))
+         AND LOWER(TRIM(employee_code)) = LOWER(TRIM($3))`,
+      [email, emailAlt, employee_code]
+    );
+
+    const user = userRes.rows[0];
+    if (!user) {
+      return res.status(404).json({ message: "ข้อมูลอีเมลหรือรหัสประจำตัวบุคลากรไม่ถูกต้อง หรือไม่ตรงกับในระบบ" });
+    }
+
+    const resetToken = jwt.sign(
+      { email: user.email, purpose: "password_reset" },
+      process.env.JWT_SECRET || "faculty_super_secret_jwt_key_2026",
+      { expiresIn: "15m" }
+    );
+
+    res.json({
+      success: true,
+      message: "ยืนยันข้อมูลบุคลากรถูกต้อง กรุณากำหนดรหัสผ่านใหม่",
+      resetToken,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error("verifyByEmployeeCode error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการตรวจสอบข้อมูล: " + err.message });
+  }
+}
+
 module.exports = {
+  verifyByEmployeeCode,
   sendResetOtp,
   verifyResetOtp,
   resetPasswordWithOtp,
