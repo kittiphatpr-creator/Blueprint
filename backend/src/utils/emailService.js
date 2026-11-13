@@ -128,7 +128,7 @@ async function sendNewLeaveNotification({ to, applicantName, leaveType, startDat
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #64748b;">จำนวนวันลา:</td>
-              <td style="padding: 8px 0; font-weight: bold; color: #0f172a;">${daysCount} วัน</td>
+              <td style="padding: 8px 0; font-weight: bold; color: #0f172a;">${Number(daysCount)} วัน</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #64748b; vertical-align: top;">เหตุผลการลา:</td>
@@ -194,7 +194,7 @@ async function sendLeaveApprovedNotification({ to, applicantName, approverName, 
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #166534;">จำนวนวัน:</td>
-              <td style="padding: 8px 0; font-weight: bold; color: #14532d;">${daysCount} วัน</td>
+              <td style="padding: 8px 0; font-weight: bold; color: #14532d;">${Number(daysCount)} วัน</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #166534;">ผู้อนุมัติ:</td>
@@ -255,7 +255,7 @@ async function sendLeaveRejectedNotification({ to, applicantName, approverName, 
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #9f1239;">ช่วงวันที่ลา:</td>
-              <td style="padding: 8px 0; color: #881337;">${formatThaiDate(startDate)} - ${formatThaiDate(endDate)} (${daysCount} วัน)</td>
+              <td style="padding: 8px 0; color: #881337;">${formatThaiDate(startDate)} - ${formatThaiDate(endDate)} (${Number(daysCount)} วัน)</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #9f1239; vertical-align: top;">เหตุผลที่ไม่อนุมัติ:</td>

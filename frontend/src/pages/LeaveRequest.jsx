@@ -273,7 +273,7 @@ export default function LeaveRequest() {
                     />
                     <div>
                       <p className="text-sm font-bold text-slate-900">{b.leave_type_name}</p>
-                      <p className="text-xs text-slate-600">คงเหลือ {b.remaining_days} วัน</p>
+                      <p className="text-xs text-slate-600">คงเหลือ {Number(b.remaining_days)} วัน</p>
                     </div>
                   </div>
                 </label>
@@ -341,7 +341,7 @@ export default function LeaveRequest() {
                     isOverBalance ? "text-rose-600" : "text-emerald-600"
                   }`}
                 >
-                  {isOverBalance ? "สิทธิ์ไม่เพียงพอ" : `${selectedBalance.remaining_days - daysCount} วัน`}
+                  {isOverBalance ? "สิทธิ์ไม่เพียงพอ" : `${Number(selectedBalance.remaining_days - daysCount)} วัน`}
                 </span>
               </div>
             )}

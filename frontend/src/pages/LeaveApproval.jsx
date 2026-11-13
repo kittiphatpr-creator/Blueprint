@@ -252,7 +252,7 @@ export default function LeaveApproval() {
 
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700">
                     <span className="font-bold text-red-800 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
-                      {req.leave_type_name} ({req.days_count} วัน)
+                      {req.leave_type_name} ({Number(req.days_count)} วัน)
                     </span>
                     <span className="text-slate-600">
                       ช่วงวันที่: <strong className="text-slate-800">{formatThaiDate(req.start_date)} - {formatThaiDate(req.end_date)}</strong>
@@ -336,7 +336,7 @@ export default function LeaveApproval() {
           <form onSubmit={handleRejectSubmit} className="space-y-4">
             <div>
               <p className="text-sm font-semibold text-slate-800">
-                ผู้ยื่นคำขอ: {rejectModalReq.full_name} ({rejectModalReq.leave_type_name} {rejectModalReq.days_count} วัน)
+                ผู้ยื่นคำขอ: {rejectModalReq.full_name} ({rejectModalReq.leave_type_name} {Number(rejectModalReq.days_count)} วัน)
               </p>
               <p className="text-xs text-slate-600 mt-1">
                 การไม่อนุมัติจะส่งการแจ้งเตือนไปยังผู้ยื่นคำขอพร้อมเหตุผลที่ระบุ
@@ -402,7 +402,7 @@ export default function LeaveApproval() {
               </div>
               <div className="p-3 bg-slate-50 rounded-xl">
                 <span className="text-slate-600 block">จำนวนวันที่ลา</span>
-                <span className="font-bold text-slate-800 mt-0.5 block">{detailModalReq.days_count} วัน</span>
+                <span className="font-bold text-slate-800 mt-0.5 block">{Number(detailModalReq.days_count)} วัน</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl col-span-2">
                 <span className="text-slate-600 block">ช่วงวันที่ลา</span>

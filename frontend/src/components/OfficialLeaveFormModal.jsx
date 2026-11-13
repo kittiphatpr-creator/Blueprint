@@ -93,7 +93,7 @@ export default function OfficialLeaveFormModal({ isOpen, onClose, request, user 
               </p>
               <p>
                 โดยขอลาตั้งแต่วันที่ <strong>{formatThaiDate(request.start_date)}</strong> ถึงวันที่{" "}
-                <strong>{formatThaiDate(request.end_date)}</strong> มีกำหนด <strong>{request.days_count} วันทำการ</strong>
+                <strong>{formatThaiDate(request.end_date)}</strong> มีกำหนด <strong>{Number(request.days_count)} วันทำการ</strong>
               </p>
               <p>
                 ในระหว่างการลานี้ ข้าพเจ้าสามารถติดต่อได้ที่เบอร์โทรศัพท์ <strong>{reqUser.phone || request.phone || "08x-xxx-xxxx"}</strong> หรืออีเมล{" "}

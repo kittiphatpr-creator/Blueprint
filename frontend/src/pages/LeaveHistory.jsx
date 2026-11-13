@@ -170,7 +170,7 @@ export default function LeaveHistory() {
                     <td className="px-5 py-4 text-xs font-medium text-slate-700">
                       {formatThaiDate(req.start_date)} - {formatThaiDate(req.end_date)}
                     </td>
-                    <td className="px-5 py-4 font-bold text-slate-800">{req.days_count} วัน</td>
+                    <td className="px-5 py-4 font-bold text-slate-800">{Number(req.days_count)} วัน</td>
                     <td className="px-5 py-4 text-slate-600 text-xs max-w-xs truncate">
                       {req.reason}
                     </td>
@@ -233,7 +233,7 @@ export default function LeaveHistory() {
               <div className="p-3 bg-slate-50 rounded-xl">
                 <span className="text-slate-600 block">จำนวนวันที่ขอลา</span>
                 <span className="font-bold text-slate-900 mt-0.5 block">
-                  {selectedRequest.days_count} วัน
+                  {Number(selectedRequest.days_count)} วัน
                 </span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl col-span-2">

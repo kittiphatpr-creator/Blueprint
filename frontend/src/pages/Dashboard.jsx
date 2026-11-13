@@ -261,7 +261,7 @@ export default function Dashboard() {
                         <td className="py-3 text-slate-600 text-xs">
                           {formatThaiDate(leave.start_date, true)} - {formatThaiDate(leave.end_date, true)}
                         </td>
-                        <td className="py-3 font-semibold text-slate-800">{leave.days_count} วัน</td>
+                        <td className="py-3 font-semibold text-slate-800">{Number(leave.days_count)} วัน</td>
                         <td className="py-3 text-right">
                           <LeaveStatusBadge status={leave.status} />
                         </td>

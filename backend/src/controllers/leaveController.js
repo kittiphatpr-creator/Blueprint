@@ -8,7 +8,7 @@ const {
 async function getMyRequests(req, res) {
   try {
     const result = await pool.query(
-      `SELECT lr.*, lt.name AS leave_type_name, u.full_name,
+      `SELECT lr.*, lr.days_count::float AS days_count, lt.name AS leave_type_name, u.full_name,
               approver.full_name AS approver_name
        FROM leave_requests lr
        JOIN leave_types lt ON lt.id = lr.leave_type_id
@@ -55,7 +55,7 @@ async function getAllRequests(req, res) {
 
   try {
     const result = await pool.query(
-      `SELECT lr.*, lt.name AS leave_type_name, 
+      `SELECT lr.*, lr.days_count::float AS days_count, lt.name AS leave_type_name, 
               u.full_name, u.employee_code, u.position, u.department_id,
               d.name AS department_name,
               approver.full_name AS approver_name
@@ -367,7 +367,7 @@ async function getCalendar(req, res) {
 
   try {
     const result = await pool.query(
-      `SELECT lr.id, lr.start_date, lr.end_date, lr.days_count, lr.reason,
+      `SELECT lr.id, lr.start_date, lr.end_date, lr.days_count::float AS days_count, lr.reason,
               u.full_name, u.position, u.employee_code,
               d.name AS department_name, lt.name AS leave_type_name
        FROM leave_requests lr

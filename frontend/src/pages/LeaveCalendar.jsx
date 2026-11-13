@@ -412,7 +412,7 @@ export default function LeaveCalendar() {
                                 : `${formatThaiDate(l.start_date)} - ${formatThaiDate(l.end_date)}`}
                             </span>
                             <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md font-semibold">
-                              {l.days_count} วัน
+                              {Number(l.days_count)} วัน
                             </span>
                           </div>
                         </td>
@@ -481,7 +481,7 @@ export default function LeaveCalendar() {
                         {l.leave_type_name}
                       </span>
                       <span className="text-[11px] text-slate-500 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">
-                        {l.days_count} วัน
+                        {Number(l.days_count)} วัน
                       </span>
                     </div>
 
@@ -575,7 +575,7 @@ export default function LeaveCalendar() {
                   <div className="p-3 bg-slate-50 rounded-xl">
                     <span className="text-slate-500 block">จำนวนวันที่ลา</span>
                     <span className="font-bold text-slate-800 mt-0.5 block">
-                      {selectedItem.leave?.days_count} วัน
+                      {Number(selectedItem.leave?.days_count)} วัน
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl col-span-2">

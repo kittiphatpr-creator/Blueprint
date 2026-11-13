@@ -46,7 +46,7 @@ export default function LeaveBalanceCard({ balance }) {
 
       <div className="mt-3 flex items-baseline justify-between">
         <div>
-          <span className="text-2xl font-bold text-slate-900">{remaining_days}</span>
+          <span className="text-2xl font-bold text-slate-900">{Number(remaining_days)}</span>
           <span className="ml-1 text-xs text-slate-500">วันคงเหลือ</span>
         </div>
         <div className="text-xs text-slate-600">
@@ -64,7 +64,7 @@ export default function LeaveBalanceCard({ balance }) {
         </div>
         <div className="mt-1 flex justify-between text-[11px] text-slate-600">
           <span>อัตราการใช้ {percentage}%</span>
-          <span>เหลือ {remaining_days} วัน</span>
+          <span>เหลือ {Number(remaining_days)} วัน</span>
         </div>
       </div>
     </div>
