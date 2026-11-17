@@ -351,13 +351,16 @@ async function getCalendar(req, res) {
   const values = [];
 
   if (month && year) {
-    values.push(year, month);
+    values.push(parseInt(year, 10), parseInt(month, 10));
     conditions.push(
-      `EXTRACT(YEAR FROM lr.start_date) = $${values.length - 1} AND EXTRACT(MONTH FROM lr.start_date) = $${values.length}`
+      `(lr.start_date <= (MAKE_DATE($${values.length - 1}::int, $${values.length}::int, 1) + INTERVAL '1 month - 1 day')::date
+        AND lr.end_date >= MAKE_DATE($${values.length - 1}::int, $${values.length}::int, 1))`
     );
   } else if (year) {
-    values.push(year);
-    conditions.push(`EXTRACT(YEAR FROM lr.start_date) = $${values.length}`);
+    values.push(parseInt(year, 10));
+    conditions.push(
+      `(EXTRACT(YEAR FROM lr.start_date) = $${values.length} OR EXTRACT(YEAR FROM lr.end_date) = $${values.length})`
+    );
   }
 
   if (department_id) {
@@ -367,7 +370,10 @@ async function getCalendar(req, res) {
 
   try {
     const result = await pool.query(
-      `SELECT lr.id, lr.start_date, lr.end_date, lr.days_count::float AS days_count, lr.reason,
+      `SELECT lr.id, 
+              TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date, 
+              TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date, 
+              lr.days_count::float AS days_count, lr.reason,
               u.full_name, u.position, u.employee_code,
               d.name AS department_name, lt.name AS leave_type_name
        FROM leave_requests lr
