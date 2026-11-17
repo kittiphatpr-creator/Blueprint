@@ -36,6 +36,11 @@ export const leaveService = {
     return response.data;
   },
 
+  async updateUserLeaveBalance(userId, data) {
+    const response = await api.put(`/leave-balances/${userId}`, data);
+    return response.data;
+  },
+
   async getLeaveCalendar(params = {}) {
     const response = await api.get("/leave-requests/calendar", { params });
     return response.data;
