@@ -13,7 +13,7 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        value: postgresql://engineering_db_m1se_user:AFLu9fm7d35fcYRbGY3ahgfFuV4k5IEA@dpg-dble5v0u01pc739vek00-a.singapore-postgres.render.com/engineering_db_m1se
+        value: postgresql://postgres.nsaeodivfueoehqcjwbd:0639066980z@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
       - key: GOOGLE_CLIENT_ID
         value: 260624720228-3t6vmlo77nts8qlde1teqvakldkclf0a.apps.googleusercontent.com
       - key: VITE_GOOGLE_CLIENT_ID
