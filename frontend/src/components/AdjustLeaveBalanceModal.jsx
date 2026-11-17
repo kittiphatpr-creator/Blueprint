@@ -49,9 +49,9 @@ export default function AdjustLeaveBalanceModal({
   useEffect(() => {
     if (isOpen && currentBalances.length > 0) {
       setDays({
-        1: Number(currentBalances.find((b) => b.leave_type_id === 1)?.total_days ?? 30),
-        2: Number(currentBalances.find((b) => b.leave_type_id === 2)?.total_days ?? 15),
-        3: Number(currentBalances.find((b) => b.leave_type_id === 3)?.total_days ?? 10),
+        1: Math.floor(Number(currentBalances.find((b) => b.leave_type_id === 1)?.total_days ?? 30)),
+        2: Math.floor(Number(currentBalances.find((b) => b.leave_type_id === 2)?.total_days ?? 15)),
+        3: Math.floor(Number(currentBalances.find((b) => b.leave_type_id === 3)?.total_days ?? 10)),
       });
       setError(null);
     }
@@ -60,7 +60,7 @@ export default function AdjustLeaveBalanceModal({
   const adj = (typeId, delta) => {
     setDays((prev) => ({
       ...prev,
-      [typeId]: Math.max(0, Number(prev[typeId]) + delta),
+      [typeId]: Math.max(0, Math.floor(Number(prev[typeId] || 0)) + delta),
     }));
   };
 
@@ -73,9 +73,9 @@ export default function AdjustLeaveBalanceModal({
       await leaveService.updateUserLeaveBalance(userId, {
         year: currentYear,
         balances: [
-          { leave_type_id: 1, total_days: Math.max(0, Number(days[1])) },
-          { leave_type_id: 2, total_days: Math.max(0, Number(days[2])) },
-          { leave_type_id: 3, total_days: Math.max(0, Number(days[3])) },
+          { leave_type_id: 1, total_days: Math.max(0, Math.floor(Number(days[1] || 0))) },
+          { leave_type_id: 2, total_days: Math.max(0, Math.floor(Number(days[2] || 0))) },
+          { leave_type_id: 3, total_days: Math.max(0, Math.floor(Number(days[3] || 0))) },
         ],
       });
       if (onSuccess) await onSuccess();
@@ -140,14 +140,20 @@ export default function AdjustLeaveBalanceModal({
                     <Minus className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Input */}
+                  {/* Input - จำนวนเต็มเท่านั้น ตัดทศนิยม 0.5 ออก */}
                   <input
                     type="number"
                     min="0"
-                    step="0.5"
+                    step="1"
                     value={days[typeId]}
-                    onChange={(e) => setDays((prev) => ({ ...prev, [typeId]: e.target.value }))}
-                    className={`w-16 h-8 text-center text-sm font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 ${c.input}`}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDays((prev) => ({
+                        ...prev,
+                        [typeId]: v === "" ? "" : Math.floor(Number(v)),
+                      }));
+                    }}
+                    className={`w-16 h-8 text-center text-sm font-bold bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${c.input}`}
                   />
 
                   {/* เพิ่ม */}
