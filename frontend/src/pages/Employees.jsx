@@ -642,9 +642,10 @@ export default function Employees() {
                   <button
                     type="button"
                     onClick={() => setIsAdjustModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition active:scale-95"
+                    className="inline-flex items-center gap-2 px-4 py-2 sm:px-4.5 sm:py-2.5 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-red-900 via-red-800 to-red-700 hover:from-red-950 hover:to-red-800 rounded-xl shadow-md shadow-red-900/25 hover:shadow-lg hover:shadow-red-900/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
+                    title="ปรับปรุงหรือเพิ่มยอดวันลาสำหรับ 3 ประเภทหลัก"
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <SlidersHorizontal className="w-4 h-4 text-amber-300 shrink-0" />
                     <span>ปรับเพิ่มวันลา</span>
                   </button>
                 )}
