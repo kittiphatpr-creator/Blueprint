@@ -6,6 +6,7 @@ import { canManageEmployees, ROLE_LABELS } from "../utils/permissions";
 import { RoleBadge } from "../components/Badge";
 import Modal from "../components/Modal";
 import LeaveBalanceCard from "../components/LeaveBalanceCard";
+import AdjustLeaveBalanceModal from "../components/AdjustLeaveBalanceModal";
 import {
   Search,
   Filter,
@@ -21,6 +22,7 @@ import {
   CheckCircle,
   AlertCircle,
   Briefcase,
+  SlidersHorizontal,
 } from "lucide-react";
 
 function EmployeeAvatar({ src, name, size = "large" }) {
@@ -86,6 +88,7 @@ export default function Employees() {
   // Modals
   const [viewModalUser, setViewModalUser] = useState(null);
   const [userBalances, setUserBalances] = useState([]);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -631,9 +634,21 @@ export default function Employees() {
 
             {/* Leave Balances Breakdown */}
             <div>
-              <h4 className="text-sm font-bold text-slate-900 mb-3">
-                สิทธิ์และยอดวันลาคงเหลือ (ปี {new Date().getFullYear() + 543})
-              </h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-bold text-slate-900">
+                  สิทธิ์และยอดวันลาคงเหลือ (ปี {new Date().getFullYear() + 543})
+                </h4>
+                {canManageEmployees(user?.role) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAdjustModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition active:scale-95"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>ปรับเพิ่มวันลา</span>
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {userBalances.map((b) => (
                   <LeaveBalanceCard key={b.leave_type_id} balance={b} />
@@ -643,6 +658,21 @@ export default function Employees() {
           </div>
         )}
       </Modal>
+
+      {/* Modal: ปรับสิทธิ์วันลา (เฉพาะ employee ที่กดดู) */}
+      {viewModalUser && (
+        <AdjustLeaveBalanceModal
+          isOpen={isAdjustModalOpen}
+          onClose={() => setIsAdjustModalOpen(false)}
+          userId={viewModalUser.id}
+          userName={viewModalUser.full_name}
+          currentBalances={userBalances}
+          onSuccess={async () => {
+            const fresh = await leaveService.getUserLeaveBalance(viewModalUser.id);
+            setUserBalances(fresh);
+          }}
+        />
+      )}
 
       {/* Modal: Add / Edit Employee Form */}
       <Modal

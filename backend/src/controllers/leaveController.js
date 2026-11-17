@@ -385,6 +385,60 @@ async function getCalendar(req, res) {
   }
 }
 
+/**
+ * อัปเดตหรือเพิ่มยอดวันลา (Admin / Staff / Head)
+ */
+async function updateBalance(req, res) {
+  const userId = req.params.userId || req.user.id;
+  const { year, leave_type_id, total_days, add_days, balances } = req.body;
+  const targetYear = year ? parseInt(year) : new Date().getFullYear();
+
+  try {
+    // 1. กรณีส่งแบบรายตัว (เช่น เพิ่มวันลารายการเดียว)
+    if (leave_type_id) {
+      if (add_days !== undefined) {
+        await pool.query(
+          `INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days)
+           VALUES ($1, $2, $3, $4, 0)
+           ON CONFLICT (user_id, leave_type_id, year)
+           DO UPDATE SET total_days = leave_balances.total_days + $4`,
+          [userId, leave_type_id, targetYear, Number(add_days)]
+        );
+      } else if (total_days !== undefined) {
+        await pool.query(
+          `INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days)
+           VALUES ($1, $2, $3, $4, 0)
+           ON CONFLICT (user_id, leave_type_id, year)
+           DO UPDATE SET total_days = $4`,
+          [userId, leave_type_id, targetYear, Number(total_days)]
+        );
+      }
+      return res.json({ message: "อัปเดตสิทธิ์วันลาเรียบร้อยแล้ว" });
+    }
+
+    // 2. กรณีส่งแบบอาเรย์หลายรายการ
+    if (balances && Array.isArray(balances)) {
+      for (const item of balances) {
+        if (item.leave_type_id && item.total_days !== undefined) {
+          await pool.query(
+            `INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days)
+             VALUES ($1, $2, $3, $4, 0)
+             ON CONFLICT (user_id, leave_type_id, year)
+             DO UPDATE SET total_days = $4`,
+            [userId, item.leave_type_id, targetYear, Number(item.total_days)]
+          );
+        }
+      }
+      return res.json({ message: "อัปเดตสิทธิ์วันลาเรียบร้อยแล้ว" });
+    }
+
+    return res.status(400).json({ message: "ข้อมูลวันลาไม่ถูกต้อง" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปเดตสิทธิ์วันลา" });
+  }
+}
+
 module.exports = {
   getMyRequests,
   getAllRequests,
@@ -393,4 +447,5 @@ module.exports = {
   reject,
   getBalance,
   getCalendar,
+  updateBalance,
 };
