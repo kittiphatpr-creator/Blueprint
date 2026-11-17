@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import { dashboardService } from "../services/dashboardService";
 import StatCard from "../components/StatCard";
 import LeaveBalanceCard from "../components/LeaveBalanceCard";
-import AdjustLeaveBalanceModal from "../components/AdjustLeaveBalanceModal";
 import { LeaveStatusBadge } from "../components/Badge";
 import { formatThaiDate, formatThaiDateTime } from "../utils/dateUtils";
 import { ROLES, canApproveLeaves, canViewAllEmployees } from "../utils/permissions";
@@ -21,14 +20,12 @@ import {
   UserCheck,
   Megaphone,
   Paperclip,
-  Sliders,
 } from "lucide-react";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -145,30 +142,17 @@ export default function Dashboard() {
 
       {/* Leave Balances Section */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900">วันลาคงเหลือของคุณ (ประจำปี {new Date().getFullYear() + 543})</h2>
             <p className="text-xs text-slate-600">ยอดวันลาตามระเบียบคณะวิศวกรรมศาสตร์</p>
           </div>
-          <div className="flex items-center gap-2">
-            {(user?.role === "admin" || user?.role === "head" || user?.role === "staff") && (
-              <button
-                type="button"
-                onClick={() => setIsAdjustModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition active:scale-95 shadow-2xs cursor-pointer"
-                title="ปรับปรุงหรือเพิ่มจำนวนวันลาสำหรับ 3 ประเภทหลัก (ลาป่วย, ลากิจ, ลาพักผ่อน)"
-              >
-                <Sliders className="w-3.5 h-3.5" />
-                <span>ปรับเพิ่มวันลา (3 ประเภทหลัก)</span>
-              </button>
-            )}
-            <Link
-              to="/leave-history"
-              className="text-xs font-semibold text-red-800 hover:text-red-900 flex items-center gap-1"
-            >
-              ดูประวัติทั้งหมด <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <Link
+            to="/leave-history"
+            className="text-xs font-semibold text-red-800 hover:text-red-900 flex items-center gap-1"
+          >
+            ดูประวัติทั้งหมด <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -354,23 +338,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* Modal: Adjust Leave Balances */}
-      <AdjustLeaveBalanceModal
-        isOpen={isAdjustModalOpen}
-        onClose={() => setIsAdjustModalOpen(false)}
-        userId={user?.id}
-        userName={user?.full_name}
-        currentBalances={data?.my_balances || []}
-        onSuccess={async () => {
-          try {
-            const res = await dashboardService.getDashboardSummary();
-            setData(res);
-          } catch (e) {
-            console.error(e);
-          }
-        }}
-      />
     </div>
   );
 }

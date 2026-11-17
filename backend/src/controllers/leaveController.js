@@ -385,39 +385,6 @@ async function getCalendar(req, res) {
   }
 }
 
-/**
- * PUT /leave-balances/:userId
- * ปรับปรุง/เพิ่มสิทธิ์วันลา (total_days) ของบุคลากร
- */
-async function updateBalance(req, res) {
-  const userId = req.params.userId || req.user.id;
-  const { year, balances } = req.body;
-  const targetYear = year ? parseInt(year) : new Date().getFullYear();
-
-  if (!balances || !Array.isArray(balances)) {
-    return res.status(400).json({ message: "ข้อมูลวันลาไม่ถูกต้อง" });
-  }
-
-  try {
-    for (const item of balances) {
-      if (item.leave_type_id && item.total_days !== undefined) {
-        await pool.query(
-          `INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days)
-           VALUES ($1, $2, $3, $4, 0)
-           ON CONFLICT (user_id, leave_type_id, year)
-           DO UPDATE SET total_days = $4`,
-          [userId, item.leave_type_id, targetYear, Number(item.total_days)]
-        );
-      }
-    }
-
-    res.json({ message: "อัปเดตสิทธิ์วันลาเรียบร้อยแล้ว" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปเดตสิทธิ์วันลา" });
-  }
-}
-
 module.exports = {
   getMyRequests,
   getAllRequests,
@@ -426,5 +393,4 @@ module.exports = {
   reject,
   getBalance,
   getCalendar,
-  updateBalance,
 };

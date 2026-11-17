@@ -7,6 +7,5 @@ router.use(requireAuth);
 
 router.get("/me", leaveController.getBalance);
 router.get("/:userId", leaveController.getBalance);
-router.put("/:userId", leaveController.updateBalance);
 
 module.exports = router;
