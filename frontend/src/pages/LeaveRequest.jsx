@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { leaveService } from "../services/leaveService";
 import { useAuth } from "../context/AuthContext";
 import LeaveBalanceCard from "../components/LeaveBalanceCard";
+import ThaiDatePicker from "../components/ThaiDatePicker";
 import { calculateDays, toISODateString } from "../utils/dateUtils";
 import {
   FilePlus2,
@@ -287,31 +288,29 @@ export default function LeaveRequest() {
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 2. วันที่เริ่มต้นลา <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  required
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
-                />
-              </div>
+              <ThaiDatePicker
+                required
+                value={formData.start_date}
+                onChange={(val) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    start_date: val,
+                    end_date: prev.end_date < val ? val : prev.end_date,
+                  }));
+                }}
+              />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 วันที่สิ้นสุดลา <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  required
-                  min={formData.start_date}
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
-                />
-              </div>
+              <ThaiDatePicker
+                required
+                min={formData.start_date}
+                value={formData.end_date}
+                onChange={(val) => setFormData((prev) => ({ ...prev, end_date: val }))}
+              />
             </div>
           </div>
 
