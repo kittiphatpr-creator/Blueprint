@@ -82,25 +82,25 @@ function PersonBalanceCard({ name, department, leaveDetails }) {
   return (
     <div className="bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs transition-all my-2">
       {/* Header บุคลากร */}
-      <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-200/60">
-        <div className="flex items-center gap-2 truncate">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 mb-2.5 border-b border-slate-200/60">
+        <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-red-800 to-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
             <User className="w-4 h-4" />
           </div>
-          <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+          <span className="font-bold text-slate-900 text-xs sm:text-sm">
             {name}
           </span>
         </div>
         {department && department !== "-" && (
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 shadow-2xs flex items-center gap-1">
             <Building className="w-2.5 h-2.5 text-slate-400" />
-            <span className="truncate max-w-[110px]">{department}</span>
+            <span>{department}</span>
           </span>
         )}
       </div>
 
-      {/* Grid ยอดวันลาคงเหลือ */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+      {/* Grid ยอดวันลาคงเหลือ 3 ประเภท: บรรทัดบนชื่อประเภท บรรทัดล่างจำนวนวัน */}
+      <div className="grid grid-cols-3 gap-2">
         {leaveItems.map((item, idx) => {
           const meta = getLeaveMeta(item);
           const Icon = meta.icon;
@@ -111,17 +111,20 @@ function PersonBalanceCard({ name, department, leaveDetails }) {
           return (
             <div
               key={idx}
-              className={`flex items-center justify-between p-2 rounded-xl border text-xs ${meta.bg}`}
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl border text-center shadow-2xs ${meta.bg}`}
             >
-              <div className="flex items-center gap-1.5 truncate">
-                <Icon className="w-3.5 h-3.5 shrink-0 opacity-80" />
-                <span className="text-[11px] font-semibold truncate">
-                  {meta.label}
+              <div className="flex items-center justify-center gap-1 text-[11px] font-bold leading-tight">
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{meta.label}</span>
+              </div>
+              <div className="mt-1 flex items-baseline justify-center gap-1">
+                <span className="font-extrabold text-sm sm:text-base leading-none">
+                  {remainingNum}
+                </span>
+                <span className="text-[11px] font-bold opacity-80 leading-none">
+                  วัน
                 </span>
               </div>
-              <span className={`px-1.5 py-0.5 rounded-md font-bold text-xs shrink-0 ${meta.badge}`}>
-                {remainingNum} วัน
-              </span>
             </div>
           );
         })}
@@ -400,10 +403,10 @@ export default function LeaveAIChat() {
 
                 {/* Message Bubble */}
                 <div
-                  className={`max-w-[88%] text-xs sm:text-sm leading-relaxed transition ${
+                  className={`text-xs sm:text-sm leading-relaxed transition ${
                     m.role === "user"
-                      ? "px-4 py-2.5 rounded-2xl rounded-tr-xs bg-gradient-to-r from-red-800 to-red-700 text-white shadow-xs font-medium"
-                      : "p-3.5 rounded-2xl rounded-tl-xs bg-white border border-slate-200/90 text-slate-800 shadow-xs space-y-2 w-full"
+                      ? "max-w-[85%] px-4 py-2.5 rounded-2xl rounded-tr-xs bg-gradient-to-r from-red-800 to-red-700 text-white shadow-xs font-medium"
+                      : "flex-1 max-w-full p-3.5 rounded-2xl rounded-tl-xs bg-white border border-slate-200/90 text-slate-800 shadow-xs space-y-2"
                   }`}
                 >
                   {m.role === "user" ? (
