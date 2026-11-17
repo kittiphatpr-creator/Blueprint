@@ -56,7 +56,7 @@ async function getAllRequests(req, res) {
   try {
     const result = await pool.query(
       `SELECT lr.*, lr.days_count::float AS days_count, lt.name AS leave_type_name, 
-              u.full_name, u.employee_code, u.position, u.department_id,
+              u.full_name, u.employee_code, u.position, u.department_id, u.profile_image,
               d.name AS department_name,
               approver.full_name AS approver_name
        FROM leave_requests lr
@@ -379,7 +379,7 @@ async function getCalendar(req, res) {
               TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date, 
               TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date, 
               lr.days_count::float AS days_count, lr.reason,
-              u.full_name, u.position, u.employee_code,
+              u.full_name, u.position, u.employee_code, u.profile_image,
               d.name AS department_name, lt.name AS leave_type_name
        FROM leave_requests lr
        JOIN users u ON u.id = lr.user_id

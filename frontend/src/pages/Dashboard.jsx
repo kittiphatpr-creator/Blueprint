@@ -5,6 +5,7 @@ import { dashboardService } from "../services/dashboardService";
 import StatCard from "../components/StatCard";
 import LeaveBalanceCard from "../components/LeaveBalanceCard";
 import AdjustLeaveBalanceModal from "../components/AdjustLeaveBalanceModal";
+import UserAvatar from "../components/UserAvatar";
 import { LeaveStatusBadge } from "../components/Badge";
 import { formatThaiDate, formatThaiDateTime } from "../utils/dateUtils";
 import { ROLES, canApproveLeaves, canViewAllEmployees } from "../utils/permissions";
@@ -224,9 +225,11 @@ export default function Dashboard() {
                     className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-sm">
-                        {item.full_name?.charAt(0)}
-                      </div>
+                      <UserAvatar
+                        src={item.profile_image || (item.email ? localStorage.getItem("profile_avatar_" + item.email.toLowerCase()) : null)}
+                        name={item.full_name}
+                        size="md"
+                      />
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{item.full_name}</p>
                         <p className="text-xs text-slate-600">

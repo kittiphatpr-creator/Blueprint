@@ -5,6 +5,7 @@ import { formatThaiDate } from "../utils/dateUtils";
 import { getThaiHoliday, isThaiHoliday } from "../utils/thaiHolidays";
 import ThaiDatePicker from "../components/ThaiDatePicker";
 import Modal from "../components/Modal";
+import UserAvatar from "../components/UserAvatar";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -197,6 +198,15 @@ export default function LeaveCalendar() {
     if (type?.includes("ป่วย")) return "bg-rose-100 text-rose-800 border-rose-200";
     if (type?.includes("กิจ")) return "bg-amber-100 text-amber-800 border-amber-200";
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
+  };
+
+  const getAvatarSrc = (item) => {
+    if (item?.profile_image) return item.profile_image;
+    if (item?.email) {
+      const cached = localStorage.getItem("profile_avatar_" + item.email.toLowerCase());
+      if (cached) return cached;
+    }
+    return null;
   };
 
   // Count holidays in current month
@@ -890,9 +900,7 @@ export default function LeaveCalendar() {
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-red-800 to-slate-900 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-2xs">
-                              {l.full_name?.charAt(0)}
-                            </div>
+                            <UserAvatar src={getAvatarSrc(l)} name={l.full_name} size="sm" />
                             <div>
                               <span className="font-bold text-slate-800 block">{l.full_name}</span>
                               <span className="text-[10px] text-slate-400 block">{l.position || "อาจารย์/เจ้าหน้าที่"}</span>
@@ -958,9 +966,7 @@ export default function LeaveCalendar() {
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-800 to-slate-900 text-white font-bold flex items-center justify-center text-xs shrink-0">
-                        {l.full_name?.charAt(0)}
-                      </div>
+                      <UserAvatar src={getAvatarSrc(l)} name={l.full_name} size="md" />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-bold text-slate-900 truncate">{l.full_name}</h4>
                         <p className="text-[10px] text-slate-500 truncate">{l.department_name || "สำนักงานคณะ"}</p>
@@ -1025,9 +1031,11 @@ export default function LeaveCalendar() {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-red-800 to-slate-900 text-white font-bold flex items-center justify-center text-base sm:text-lg shadow-xs">
-                    {selectedItem.leave?.full_name?.charAt(0)}
-                  </div>
+                  <UserAvatar
+                    src={getAvatarSrc(selectedItem.leave)}
+                    name={selectedItem.leave?.full_name}
+                    size="modal"
+                  />
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">{selectedItem.leave?.full_name}</h4>
                     <p className="text-xs text-slate-600">{selectedItem.leave?.department_name || "สำนักงานคณะ"}</p>

@@ -62,7 +62,7 @@ async function getSummary(req, res) {
               TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date, 
               TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date, 
               lr.days_count, lr.reason,
-              u.full_name, u.position, d.name AS department_name, lt.name AS leave_type_name
+              u.full_name, u.position, u.profile_image, d.name AS department_name, lt.name AS leave_type_name
        FROM leave_requests lr
        JOIN users u ON u.id = lr.user_id
        LEFT JOIN departments d ON d.id = u.department_id

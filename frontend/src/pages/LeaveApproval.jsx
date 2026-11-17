@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { LeaveStatusBadge } from "../components/Badge";
 import Modal from "../components/Modal";
 import OfficialLeaveFormModal from "../components/OfficialLeaveFormModal";
+import UserAvatar from "../components/UserAvatar";
 import { exportLeaveRequestsToCSV } from "../utils/exportExcel";
 import { formatThaiDate, formatThaiDateTime } from "../utils/dateUtils";
 import {
@@ -238,9 +239,11 @@ export default function LeaveApproval() {
             >
               {/* Left Info */}
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white font-bold flex items-center justify-center text-lg shrink-0 shadow-xs">
-                  {req.full_name?.charAt(0)}
-                </div>
+                <UserAvatar
+                  src={req.profile_image || (req.email ? localStorage.getItem("profile_avatar_" + req.email.toLowerCase()) : null)}
+                  name={req.full_name}
+                  size="modal"
+                />
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-900 text-base">{req.full_name}</h3>
