@@ -139,7 +139,7 @@ async function sendNewLeaveNotification({ to, applicantName, leaveType, startDat
 
         <!-- Action Button -->
         <div style="text-align: center; margin: 28px 0 12px;">
-          <a href="${APP_URL}/leave-requests" 
+          <a href="${APP_URL}/leave-approval" 
              style="display: inline-block; background: linear-gradient(135deg, #881337 0%, #be123c 100%); color: #ffffff; text-decoration: none; font-weight: bold; padding: 12px 32px; border-radius: 10px; font-size: 15px; box-shadow: 0 4px 12px rgba(136, 19, 55, 0.25);">
             เข้าสู่ระบบเพื่อพิจารณาอนุมัติ &rarr;
           </a>
@@ -205,7 +205,7 @@ async function sendLeaveApprovedNotification({ to, applicantName, approverName, 
 
         <!-- Action Button -->
         <div style="text-align: center; margin: 28px 0 12px;">
-          <a href="${APP_URL}/leave-requests" 
+          <a href="${APP_URL}/leave-history" 
              style="display: inline-block; background: #059669; color: #ffffff; text-decoration: none; font-weight: bold; padding: 12px 32px; border-radius: 10px; font-size: 15px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);">
             ดูประวัติการลาในระบบ &rarr;
           </a>
@@ -265,7 +265,7 @@ async function sendLeaveRejectedNotification({ to, applicantName, approverName, 
         </div>
 
         <div style="text-align: center; margin: 28px 0 12px;">
-          <a href="${APP_URL}/leave-requests" 
+          <a href="${APP_URL}/leave-history" 
              style="display: inline-block; background: #475569; color: #ffffff; text-decoration: none; font-weight: bold; padding: 12px 32px; border-radius: 10px; font-size: 15px;">
             เข้าสู่ระบบ &rarr;
           </a>

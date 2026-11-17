@@ -51,6 +51,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/leave-request" element={<LeaveRequest />} />
+              <Route path="/leave-requests" element={<Navigate to="/leave-approval" replace />} />
               <Route path="/leave-history" element={<LeaveHistory />} />
               <Route path="/leave-calendar" element={<LeaveCalendar />} />
               <Route path="/announcements" element={<Announcements />} />
