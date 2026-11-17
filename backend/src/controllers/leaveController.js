@@ -342,15 +342,20 @@ async function getBalance(req, res) {
 }
 
 /**
- * GET /leave-requests/calendar?month=&year=&department_id=
+ * GET /leave-requests/calendar?month=&year=&department_id=&date=
  */
 async function getCalendar(req, res) {
-  const { month, year, department_id } = req.query;
+  const { month, year, department_id, date } = req.query;
 
   const conditions = ["lr.status = 'approved'"];
   const values = [];
 
-  if (month && year) {
+  if (date) {
+    values.push(date);
+    conditions.push(
+      `(lr.start_date <= $${values.length}::date AND lr.end_date >= $${values.length}::date)`
+    );
+  } else if (month && month !== "all" && year) {
     values.push(parseInt(year, 10), parseInt(month, 10));
     conditions.push(
       `(lr.start_date <= (MAKE_DATE($${values.length - 1}::int, $${values.length}::int, 1) + INTERVAL '1 month - 1 day')::date

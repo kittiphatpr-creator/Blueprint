@@ -14,6 +14,16 @@ const THAI_MONTHS_FULL = [
 
 export function formatThaiDate(dateString, isShort = false) {
   if (!dateString) return "-";
+  
+  // Safely parse YYYY-MM-DD without UTC timezone offset
+  const str = String(dateString).split("T")[0];
+  const parts = str.split("-").map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    const [y, m, d] = parts;
+    const monthName = isShort ? THAI_MONTHS_SHORT[m - 1] : THAI_MONTHS_FULL[m - 1];
+    return `${d} ${monthName || ""} ${y + 543}`;
+  }
+
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
 
