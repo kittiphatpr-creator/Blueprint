@@ -18,7 +18,9 @@ async function login(req, res) {
   password = String(password).trim();
 
   let emailAlt = email;
-  if (email.endsWith("@ksu.ac.th")) {
+  if (!email.includes("@")) {
+    emailAlt = `${email}@ksu.ac.th`;
+  } else if (email.endsWith("@ksu.ac.th")) {
     emailAlt = email.replace("@ksu.ac.th", "@eng.ac.th");
   } else if (email.endsWith("@eng.ac.th")) {
     emailAlt = email.replace("@eng.ac.th", "@ksu.ac.th");
@@ -29,7 +31,9 @@ async function login(req, res) {
       `SELECT u.*, d.name AS department_name 
        FROM users u 
        LEFT JOIN departments d ON d.id = u.department_id 
-       WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1)) OR LOWER(TRIM(u.email)) = LOWER(TRIM($2))`,
+       WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1)) 
+          OR LOWER(TRIM(u.email)) = LOWER(TRIM($2))
+          OR LOWER(TRIM(u.employee_code)) = LOWER(TRIM($1))`,
       [email, emailAlt]
     );
     const user = result.rows[0];
