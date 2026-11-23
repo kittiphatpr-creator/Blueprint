@@ -74,11 +74,36 @@ export default function Profile() {
   }, [user?.email, user?.profile_image]);
 
   // Profile Form State
+  const [departments, setDepartments] = useState([]);
   const [profileData, setProfileData] = useState({
     full_name: user?.full_name || "",
+    employee_code: user?.employee_code || "",
+    department_id: user?.department_id || "",
     phone: user?.phone || "",
     position: user?.position || "",
   });
+
+  useEffect(() => {
+    authService
+      .getDepartments()
+      .then((data) => {
+        if (Array.isArray(data)) setDepartments(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        full_name: user.full_name || "",
+        employee_code: user.employee_code || "",
+        department_id: user.department_id || "",
+        phone: user.phone || "",
+        position: user.position || "",
+      });
+    }
+  }, [user]);
+
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState({ text: "", type: "" });
 
@@ -284,6 +309,37 @@ export default function Profile() {
             )}
 
             <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  รหัสประจำตัวบุคลากร / รหัสอาจารย์
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น ENG-ADM02 หรือ รหัสบัตรประชาชน"
+                  value={profileData.employee_code}
+                  onChange={(e) => setProfileData({ ...profileData, employee_code: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  สาขาวิชา / ภาควิชา / สังกัด
+                </label>
+                <select
+                  value={profileData.department_id}
+                  onChange={(e) => setProfileData({ ...profileData, department_id: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+                >
+                  <option value="">-- เลือกสาขาวิชา / ภาควิชา --</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">ชื่อ-นามสกุล</label>
                 <input

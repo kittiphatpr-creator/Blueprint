@@ -85,18 +85,23 @@ async function me(req, res) {
 }
 
 async function updateProfile(req, res) {
-  const { full_name, phone, position, profile_image } = req.body;
+  const { full_name, phone, position, profile_image, employee_code, department_id } = req.body;
   try {
+    const parsedDeptId = department_id ? parseInt(department_id, 10) : null;
+    const cleanEmployeeCode = employee_code !== undefined && employee_code !== null ? String(employee_code).trim() : null;
+
     const result = await pool.query(
       `UPDATE users 
        SET full_name = COALESCE($1, full_name), 
            phone = COALESCE($2, phone), 
            position = COALESCE($3, position),
            profile_image = COALESCE($4, profile_image),
+           employee_code = COALESCE($5, employee_code),
+           department_id = COALESCE($6, department_id),
            updated_at = NOW()
-       WHERE id = $5
+       WHERE id = $7
        RETURNING id, employee_code, full_name, email, department_id, position, role, phone, profile_image`,
-      [full_name, phone, position, profile_image || null, req.user.id]
+      [full_name, phone, position, profile_image || null, cleanEmployeeCode, parsedDeptId, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -115,6 +120,9 @@ async function updateProfile(req, res) {
     res.json({ message: "อัปเดตข้อมูลส่วนตัวสำเร็จ", user });
   } catch (err) {
     console.error(err);
+    if (err.code === "23505") {
+      return res.status(400).json({ message: "รหัสประจำตัวบุคลากรนี้มีในระบบแล้ว กรุณาใช้รหัสอื่น" });
+    }
     res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปเดตข้อมูล" });
   }
 }
