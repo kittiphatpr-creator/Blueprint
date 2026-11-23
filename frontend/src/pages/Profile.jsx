@@ -15,6 +15,8 @@ import {
   Camera,
   Upload,
   Image as ImageIcon,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 // บีบอัดและย่อขนาดรูปภาพเป็น Base64 จตุรัสคุณภาพสูง (~25-35KB) เพื่อบันทึกลงฐานข้อมูลและแคชแบบถาวร
@@ -86,6 +88,9 @@ export default function Profile() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [showPwCurrent, setShowPwCurrent] = useState(false);
+  const [showPwNew, setShowPwNew] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [pwMsg, setPwMsg] = useState({ text: "", type: "" });
 
@@ -349,41 +354,68 @@ export default function Profile() {
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">รหัสผ่านปัจจุบัน</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={pwData.currentPassword}
-                  onChange={(e) => setPwData({ ...pwData, currentPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
-                />
+                <div className="relative">
+                  <input
+                    type={showPwCurrent ? "text" : "password"}
+                    required
+                    placeholder="กรอกรหัสผ่านปัจจุบัน"
+                    value={pwData.currentPassword}
+                    onChange={(e) => setPwData({ ...pwData, currentPassword: e.target.value })}
+                    className="w-full pl-3.5 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwCurrent(!showPwCurrent)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPwCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                   รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)
                 </label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  value={pwData.newPassword}
-                  onChange={(e) => setPwData({ ...pwData, newPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
-                />
+                <div className="relative">
+                  <input
+                    type={showPwNew ? "text" : "password"}
+                    required
+                    minLength={6}
+                    placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
+                    value={pwData.newPassword}
+                    onChange={(e) => setPwData({ ...pwData, newPassword: e.target.value })}
+                    className="w-full pl-3.5 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwNew(!showPwNew)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPwNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">ยืนยันรหัสผ่านใหม่</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={pwData.confirmPassword}
-                  onChange={(e) => setPwData({ ...pwData, confirmPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
-                />
+                <div className="relative">
+                  <input
+                    type={showPwConfirm ? "text" : "password"}
+                    required
+                    placeholder="กรอกรหัสผ่านใหม่อีกครั้งให้ตรงกัน"
+                    value={pwData.confirmPassword}
+                    onChange={(e) => setPwData({ ...pwData, confirmPassword: e.target.value })}
+                    className="w-full pl-3.5 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwConfirm(!showPwConfirm)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPwConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2">
